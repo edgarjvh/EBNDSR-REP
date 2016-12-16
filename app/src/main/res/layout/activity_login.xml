@@ -4,14 +4,111 @@
     android:id="@+id/activity_login"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.villasoftgps.ebndsrrep.Frm_Login">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:id="@+id/relEncabezado"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/imgModulo"
+            android:scaleType="centerInside"
+            android:src="@drawable/representante_icon"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/app_name"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/m_dulo_representante"
+            android:id="@+id/lblModuloRepresentante"
+            android:textSize="14sp"
+            android:textStyle="bold|italic"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:layout_centerHorizontal="true"
+            />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/iniciar_sesion"
+            android:id="@+id/lblTitulo"
+            android:textSize="24sp"
+            android:textStyle="bold|italic"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/lblModuloRepresentante"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linLoginFields"
+        android:orientation="vertical"
+        android:layout_below="@+id/relEncabezado">
+
+
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:id="@+id/txtCedula"
+            android:background="@drawable/school_board"
+            android:inputType="number"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:hint="@string/cedula_de_identidad"
+            android:textColorHint="#5d8357"
+            android:textSize="18sp"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:id="@+id/txtClave"
+            android:background="@drawable/school_board"
+            android:inputType="textPassword"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginBottom="15dp"
+            android:hint="@string/contrasenia"
+            android:textColorHint="#5d8357"
+            android:textSize="18sp"/>
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/img"
+        android:src="@drawable/parent_student_success"
+        android:scaleType="centerInside"
+        android:contentDescription="@string/app_name"
+        android:layout_below="@+id/btnIngresar"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/btnIngresar"
+        android:text="@string/ingresar"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_below="@+id/linLoginFields"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="@android:color/holo_blue_dark"
+        android:layout_marginBottom="10dp"/>
 </RelativeLayout>

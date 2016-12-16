@@ -1,3 +1,21 @@
 <resources>
-    <string name="app_name">EBNDSR-REP</string>
+    <string name="app_name">Módulo Representantes</string>
+    <string name="cedula_de_identidad">Cédula de Identidad</string>
+    <string name="modulo_docente">Módulo Docente</string>
+    <string name="ingresar">INGRESAR</string>
+    <string name="contrasenia">Contraseña</string>
+    <string name="modulo_representante">Módulo Representante</string>
+    <string name="iniciar_sesion">Iniciar Sesión</string>
+    <string name="esta_semana">Esta Semana</string>
+    <string name="este_mes">Este Mes</string>
+    <string name="este_año">Este Año</string>
+    <string name="iniciandoSesion">Iniciando Sesión. Por favor espere...</string>
+    <string name="bienvenidoCliente">Bienvenido(a)</string>
+    <string name="lista_sin_eventos">Sin eventos para mostrar</string>
+    <string name="escriba_su_mensaje">escriba su mensaje</string>
+    <string name="docentes">Docentes</string>
+    <string name="representante">REPRESENTANTE</string>
+    <string name="docente">DOCENTE</string>
+    <string name="cargando_eventos_npor_favor_espere">Cargando Eventos\nPor favor espere...</string>
+    <string name="m_dulo_representante">Módulo Representante</string>
 </resources>
