@@ -2,7 +2,9 @@ package com.villasoftgps.ebndsrrep;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -34,6 +36,8 @@ import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 import java.util.ArrayList;
 import java.util.Calendar;
+
+import clases.RegistrarGCM;
 import clases.Representante;
 import controles.AutoResizeTextView;
 import vistas.CustomProgress;
@@ -76,11 +80,23 @@ public class Frm_Principal extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_principal);
 
         if (sPrefs == null){
-            getApplicationContext().getSharedPreferences(PREF_NAME,MODE_PRIVATE);
+            sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME,MODE_PRIVATE);
         }
+
+        if (sPrefs.getString(PROPERTY_USER,"").equals("")){
+            Intent frm = new Intent(Frm_Principal.this,Frm_Login.class);
+            startActivity(frm);
+            return;
+        }else{
+            Gson gson = new Gson();
+            String user = sPrefs.getString(PROPERTY_USER,"");
+            representante = gson.fromJson(user, Representante.class);
+        }
+
+        setContentView(R.layout.activity_principal);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         MensajesItems = new ArrayList<>();
         spinnerItems = new ArrayList<>();
@@ -140,9 +156,7 @@ public class Frm_Principal extends Activity {
             }
         });
 
-        Gson gson = new Gson();
-        String user = sPrefs.getString(PROPERTY_USER,"");
-        representante = gson.fromJson(user, Representante.class);
+
 
         String nombre = "Bienvenido(a)\n" + "<font color='#0808e1'>" +
                 representante.getApellidos() + ", " +
@@ -229,6 +243,7 @@ public class Frm_Principal extends Activity {
         mensaje = "Buscando eventos para esta semana. Por favor espere...";
         new AsyncCalendario().execute(representante.getId(), 0);
         new AsyncDocentes().execute(representante.getId());
+        new RegistrarGCM(Frm_Principal.this,representante);
     }
 
     private void ocultarTeclado(){
@@ -350,9 +365,6 @@ public class Frm_Principal extends Activity {
 
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
-
-            //Log.d("EJVH MSJ", response.getClass().toString());
-            //Log.d("EJVH MSJ", response.toString());
 
             try
             {

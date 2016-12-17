@@ -7,14 +7,28 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        android:fullBackupContent="@xml/backup_rules">
         <activity android:name=".Frm_Login">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter android:label="Representantes">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http"
+                    android:host="www.villasoftgps.com.ve"
+                    android:pathPrefix="/desarrolloMovil/EBNDSR_REP" />
+                <data android:scheme="villasoftgps"
+                      android:host="EBNDSR_REP" />
+            </intent-filter>
         </activity>
+        <activity android:name=".Frm_Principal" />
     </application>
 
 </manifest>

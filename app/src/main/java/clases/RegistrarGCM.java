@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
 import org.json.JSONObject;
@@ -86,6 +88,7 @@ public class RegistrarGCM {
 
                 String regID = GCM.register(SENDER_ID);
 
+                Log.d("EJVH REG ID", regID);
                 Boolean registrado = registroServidor(regID);
 
                 //Guardamos los datos del registro
