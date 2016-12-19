@@ -9,10 +9,13 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.widget.DrawerLayout;
+import android.text.Editable;
 import android.text.Html;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -26,6 +29,8 @@ import android.widget.Spinner;
 import android.widget.TabHost;
 import android.widget.TextView;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,37 +39,47 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+
+import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 import clases.RegistrarGCM;
 import clases.Representante;
 import controles.AutoResizeTextView;
 import vistas.CustomProgress;
+import vistas.LogoutDialog;
 import vistas.SpinnerItems;
 import vistas.SpinnerItemsArrayAdapter;
 import vistas.lvCalendarioItems;
 import vistas.lvCalendarioItemsArrayAdapter;
 import vistas.lvMensajesItems;
 import vistas.lvMensajesItemsArrayAdapter;
+import vistas.lvMenuArrayAdapter;
+import vistas.lvMenuItems;
 
 public class Frm_Principal extends Activity {
 
-    SharedPreferences sPrefs;
+    static SharedPreferences sPrefs;
     SharedPreferences.Editor sEditor;
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
     private static final String PROPERTY_REG_ID = "registration_id";
+    private static final String PROPERTY_CONVERSATIONS = "conversations";
 
     Object response = null;
     String mensaje = "";
     lvCalendarioItems CalendarioItems[];
-    ArrayList<lvMensajesItems> MensajesItems;
+    static ArrayList<lvMensajesItems> MensajesItems;
     ArrayList<SpinnerItems> spinnerItems;
-    private Representante representante;
+    ArrayList<lvMenuItems> MenuItems;
+    private static Representante representante;
     private ListView lvCalendario;
     private ListView lvMenu;
-    private ListView lvMensajes;
+    private static ListView lvMensajes;
     private CustomProgress dialogMessage;
     DrawerLayout drawerLayout;
     AutoResizeTextView lblSinEventos;
@@ -72,14 +87,18 @@ public class Frm_Principal extends Activity {
     int value = 0;
     View sinEventos;
     View cargandoEventos;
-    lvMensajesItemsArrayAdapter adapter;
+    static lvMensajesItemsArrayAdapter adapter;
     SpinnerItemsArrayAdapter spinnerAdapter;
-    Spinner cboDocentes;
-    CountDownTimer timer;
+    lvMenuArrayAdapter menuAdapter;
+    static Spinner cboDocentes;
+    static Frm_Principal principal;
+    static Gson gson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        principal = Frm_Principal.this;
 
         if (sPrefs == null){
             sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME,MODE_PRIVATE);
@@ -98,46 +117,189 @@ public class Frm_Principal extends Activity {
         setContentView(R.layout.activity_principal);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        MensajesItems = new ArrayList<>();
         spinnerItems = new ArrayList<>();
-
-        lvCalendario = (ListView)findViewById(R.id.lvCalendario);
-        lvMensajes = (ListView)findViewById(R.id.lvMensajes);
-        lvMenu = (ListView)findViewById(R.id.lvMenu);
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        RadioGroup rgroupOpcionesCalendario = (RadioGroup) findViewById(R.id.rgroupOpcionesCalendario);
-        Button btnMenu = (Button)findViewById(R.id.btnMenu);
-        Button btnEnviarMensaje = (Button)findViewById(R.id.btnEnviarMensaje);
-        final EditText txtMensaje = (EditText)findViewById(R.id.txtMensaje);
         cboDocentes = (Spinner) findViewById(R.id.cboDocentes);
 
         cboDocentes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                timer.cancel();
-                timer.start();
+                cboDocentes.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        View view = cboDocentes.getSelectedView();
+
+                        if (view != null){
+                            TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
+                            int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                            if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                                Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                                gson = new Gson();
+                                ArrayList<lvMensajesItems> items = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                                MensajesItems.clear();
+
+                                for (int x = 0; x < items.size(); x++){
+                                    if (items.get(x).getIdDocente() == idDocente && items.get(x).getIdRepresentante() == representante.getId()){
+                                        MensajesItems.add(items.get(x));
+                                    }
+                                }
+
+                                adapter = new lvMensajesItemsArrayAdapter(Frm_Principal.this,MensajesItems);
+                                lvMensajes.setAdapter(adapter);
+
+                                if (MensajesItems.size() > 0){
+                                    lvMensajes.setSelection(MensajesItems.size() - 1);
+                                }
+                            }
+                        }
+                    }
+                });
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-                timer.cancel();
+
+            }
+        });
+
+        MensajesItems = new ArrayList<>();
+
+        MenuItems = new ArrayList<>();
+
+        MenuItems.add(0,new lvMenuItems(R.drawable.profile_icon,"Ver mi Perfil"));
+        MenuItems.add(1,new lvMenuItems(R.drawable.logout_icon,"Cerrar Sesión"));
+
+        lvCalendario = (ListView)findViewById(R.id.lvCalendario);
+        lvMensajes = (ListView)findViewById(R.id.lvMensajes);
+        lvMenu = (ListView)findViewById(R.id.lvMenu);
+
+        adapter = new lvMensajesItemsArrayAdapter(Frm_Principal.this,MensajesItems);
+        lvMensajes.setAdapter(adapter);
+
+        View lvMenuHeader = getLayoutInflater().inflate(R.layout.lvmenuheader,null);
+        menuAdapter = new lvMenuArrayAdapter(this,MenuItems);
+        lvMenu.addHeaderView(lvMenuHeader);
+        lvMenu.setAdapter(menuAdapter);
+
+        lvMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position){
+                    case 1: // ver mi perfil
+
+                        break;
+                    case 2: // cerrar sesion
+                        LogoutDialog cpd = new LogoutDialog(Frm_Principal.this);
+                        cpd.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                        cpd.setCanceledOnTouchOutside(false);
+                        cpd.show();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        RadioGroup rgroupOpcionesCalendario = (RadioGroup) findViewById(R.id.rgroupOpcionesCalendario);
+        Button btnMenu = (Button)findViewById(R.id.btnMenu);
+        final Button btnEnviarMensaje = (Button)findViewById(R.id.btnEnviarMensaje);
+
+        final EditText txtMensaje = (EditText)findViewById(R.id.txtMensaje);
+
+        txtMensaje.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                if (txtMensaje.getText().toString().length() == 0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        btnEnviarMensaje.setBackground(getResources().getDrawable(R.drawable.send_message_icon_disabled));
+                    }else{
+                        btnEnviarMensaje.setBackgroundDrawable(getResources().getDrawable(R.drawable.send_message_icon_disabled));
+                    }
+                    btnEnviarMensaje.setEnabled(false);
+                }else{
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        btnEnviarMensaje.setBackground(getResources().getDrawable(R.drawable.send_message_icon));
+                    }else{
+                        btnEnviarMensaje.setBackgroundDrawable(getResources().getDrawable(R.drawable.send_message_icon));
+                    }
+                    btnEnviarMensaje.setEnabled(true);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
             }
         });
 
         btnEnviarMensaje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MensajesItems.add(new lvMensajesItems(
-                        MensajesItems.size() + 1,
-                        1,
-                        1,
-                        Calendar.getInstance().getTimeInMillis(),
-                        txtMensaje.getText().toString()
-                ));
+                if (!txtMensaje.getText().toString().equals("")){
+                    View viewDocente = cboDocentes.getSelectedView();
 
-                lvMensajes.setSelection(MensajesItems.size() -1);
-                txtMensaje.setText(null);
-                ocultarTeclado();
+                    if (viewDocente != null){
+                        TextView lblIdDocente = (TextView) viewDocente.findViewById(R.id.lblIdDocente);
+                        int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                        if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                            Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                            gson = new Gson();
+                            ArrayList<lvMensajesItems> newMensaje = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                            long fechaEnvio = System.currentTimeMillis();
+
+                            // se crea el nuevo objeto mensaje
+                            newMensaje.add(new lvMensajesItems(
+                                    newMensaje.size() + 1, // tempID
+                                    0,                     // idMensaje
+                                    representante.getId(), // idRepresentante
+                                    idDocente,             // idDocente
+                                    1,                     // via
+                                    3,                     // status 3 = pbar visible
+                                    fechaEnvio,
+                                    txtMensaje.getText().toString())
+                                    );
+
+                            SharedPreferences.Editor sEditor = sPrefs.edit();
+                            sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
+                            sEditor.apply();
+
+                            actualizarConversaciones();
+
+                            /*
+                            parametros.add(0, "tempId*" + params[0]);
+                            parametros.add(1, "via*" + params[1]);
+                            parametros.add(2, "idRepresentante*" + params[2]);
+                            parametros.add(3, "idDocente*" + params[3]);
+                            parametros.add(4, "texto*" + params[4]);
+                            parametros.add(5, "fechaHora*" + params[5]);
+                            parametros.add(6, "enviarMensaje");
+                            */
+
+                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("es","ES"));
+
+                            new AsyncEnviarMensaje().execute(
+                                    newMensaje.size(),
+                                    1,
+                                    representante.getId(),
+                                    idDocente,
+                                    txtMensaje.getText().toString(),
+                                    df.format(new Date(fechaEnvio))
+                            );
+                        }
+                    }
+
+                    txtMensaje.setText(null);
+                }
             }
         });
 
@@ -155,8 +317,6 @@ public class Frm_Principal extends Activity {
                 mostrarOcultarMenu();
             }
         });
-
-
 
         String nombre = "Bienvenido(a)\n" + "<font color='#0808e1'>" +
                 representante.getApellidos() + ", " +
@@ -224,27 +384,67 @@ public class Frm_Principal extends Activity {
             }
         });
 
-        timer = new CountDownTimer(30000,100) {
-            @Override
-            public void onTick(long l) {
-                if (cboDocentes.getSelectedView() != null){
-                    int lblIdDocente = Integer.parseInt (((TextView)cboDocentes.getSelectedView().findViewById(R.id.lblIdDocente)).getText().toString());
-                    new AsyncMensajes().execute(representante.getId(),lblIdDocente,0,0);
-                    timer.cancel();
-                }
-            }
-
-            @Override
-            public void onFinish() {
-
-            }
-        };
-
         mensaje = "Buscando eventos para esta semana. Por favor espere...";
         new AsyncCalendario().execute(representante.getId(), 0);
-        new AsyncDocentes().execute(representante.getId());
+        new AsyncCargarDocentes().execute(representante.getId());
         new RegistrarGCM(Frm_Principal.this,representante);
     }
+
+    public static void actualizarConversaciones() {
+        principal.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                View view = cboDocentes.getSelectedView();
+
+                if (view != null){
+                    TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
+                    int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                    if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                        Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                        gson = new Gson();
+                        ArrayList<lvMensajesItems> items = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                        MensajesItems.clear();
+
+                        for (int x = 0; x < items.size(); x++){
+                            if (items.get(x).getIdDocente() == idDocente && items.get(x).getIdRepresentante() == representante.getId()){
+                                MensajesItems.add(items.get(x));
+                            }
+                        }
+
+                        adapter = new lvMensajesItemsArrayAdapter(principal,MensajesItems);
+                        lvMensajes.setAdapter(adapter);
+
+                        if (MensajesItems.size() > 0){
+                            lvMensajes.setSelection(MensajesItems.size() - 1);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /*public static void agregarMensajeRecibido(final lvMensajesItems mensaje){
+
+        principal.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                View view = cboDocentes.getSelectedView();
+
+                if (view != null){
+                    TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
+                    int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                    if (mensaje.getIdDocente() == idDocente && representante.getId() == mensaje.getIdRepresentante()){
+                        MensajesItems.add(mensaje);
+                        adapter.notifyDataSetChanged();
+                        lvMensajes.setSelection(MensajesItems.size() - 1);
+                    }
+                }
+            }
+        });
+    }*/
 
     private void ocultarTeclado(){
         // Check if no view has focus:
@@ -272,7 +472,88 @@ public class Frm_Principal extends Activity {
         }
     }
 
-    private class AsyncDocentes extends AsyncTask<Object,Integer, Integer>{
+    private class AsyncEnviarMensaje extends AsyncTask<Object,Integer,Integer>{
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object>  parametros = new ArrayList<>(7);
+            parametros.add(0, "tempId*" + params[0]);
+            parametros.add(1, "via*" + params[1]);
+            parametros.add(2, "idRepresentante*" + params[2]);
+            parametros.add(3, "idDocente*" + params[3]);
+            parametros.add(4, "texto*" + params[4]);
+            parametros.add(5, "fechaHora*" + params[5]);
+            parametros.add(6, "enviarMensaje");
+
+            respuesta ws = new respuesta();
+            response = ws.getData(parametros);
+
+            try
+            {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                switch (result) {
+                    case "OK":
+                        /*
+                        Result = "OK",
+                        TempId = tempId,
+                        IdDocente = idDocente,
+                        IdRepresentante = idRepresentante,
+                        IdMensaje = idMensaje,
+                        Estado = 0
+                        */
+
+                        Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                        gson = new Gson();
+                        ArrayList<lvMensajesItems> items = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                        for (int i = 0; i < items.size(); i++){
+                            Log.d("EJVH " + Integer.toString(i),
+                                    "idRep: " + jsonObj.get("IdRepresentante").toString() + " - " + Integer.toString(items.get(i).getIdRepresentante()) + "; " +
+                                    "idDoc: " + jsonObj.get("IdDocente").toString() + " - " + Integer.toString(items.get(i).getIdDocente()) + "; " +
+                                    "tempId: " + jsonObj.get("TempId").toString() + " - " + Integer.toString(items.get(i).getTempId()));
+
+                            if (items.get(i).getIdRepresentante() == Integer.parseInt(jsonObj.get("IdRepresentante").toString()) &&
+                                    items.get(i).getIdDocente() == Integer.parseInt(jsonObj.get("IdDocente").toString()) &&
+                                    items.get(i).getTempId() == Integer.parseInt(jsonObj.get("TempId").toString())){
+
+                                items.get(i).setIdMensaje(Integer.parseInt(jsonObj.get("IdMensaje").toString()));
+                                items.get(i).setStatus(Integer.parseInt(jsonObj.get("Estado").toString()));
+                                break;
+                            }
+                        }
+
+                        gson = new Gson();
+                        SharedPreferences.Editor sEditor = sPrefs.edit();
+                        sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(items));
+                        sEditor.apply();
+
+                        actualizarConversaciones();
+                        publishProgress(1);
+                        break;
+                    default:
+                        mensaje = jsonObj.get("Message").toString();
+                        publishProgress(2);
+                        break;
+                }
+                return null;
+            }
+            catch (JSONException e) {
+                mensaje = e.getMessage();
+                publishProgress(4);
+                return null;
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+    }
+
+
+    private class AsyncCargarDocentes extends AsyncTask<Object,Integer, Integer>{
 
         @Override
         protected Integer doInBackground(Object... params) {
@@ -340,89 +621,35 @@ public class Frm_Principal extends Activity {
                 cboDocentes.post(new Runnable() {
                     @Override
                     public void run() {
-                        timer.cancel();
-                        timer.start();
+                        View view = cboDocentes.getSelectedView();
+
+                        if (view != null){
+                            TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
+                            int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                            if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                                Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                                gson = new Gson();
+                                ArrayList<lvMensajesItems> items = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                                MensajesItems.clear();
+
+                                for (int x = 0; x < items.size(); x++){
+                                    if (items.get(x).getIdDocente() == idDocente && items.get(x).getIdRepresentante() == representante.getId()){
+                                        MensajesItems.add(items.get(x));
+                                    }
+                                }
+
+                                adapter = new lvMensajesItemsArrayAdapter(Frm_Principal.this,MensajesItems);
+                                lvMensajes.setAdapter(adapter);
+
+                                if (MensajesItems.size() > 0){
+                                    lvMensajes.setSelection(MensajesItems.size() - 1);
+                                }
+                            }
+                        }
                     }
                 });
-
-
-            }
-        }
-    }
-
-    private class AsyncMensajes extends AsyncTask<Object,Integer, Integer>{
-
-        @Override
-        protected Integer doInBackground(Object... params) {
-            publishProgress(0);
-            MensajesItems.clear();
-            ArrayList<Object>  parametros = new ArrayList<>(5);
-            parametros.add(0, "idRepresentante*" + params[0]);
-            parametros.add(1, "idDocente*" + params[1]);
-            parametros.add(2, "estado*"+ params[2]);
-            parametros.add(3, "limite*"+ params[3]);
-            parametros.add(4, "getMensajesRep");
-
-            respuesta ws = new respuesta();
-            response = ws.getData(parametros);
-
-            try
-            {
-                JSONObject jsonObj = new JSONObject(response.toString());
-
-                String result = jsonObj.get("Result").toString();
-
-                switch (result) {
-                    case "OK":
-                        JSONArray array = jsonObj.getJSONArray("Mensajes");
-
-                        for (int i = 0; i < array.length(); i++) {
-                            JSONObject mensaje = array.getJSONObject(i);
-                            String value = "";
-
-                            if (mensaje.get("fechaHora").toString().matches("^/Date\\(\\d+\\)/$")) {
-                                value = mensaje.get("fechaHora").toString().replaceAll("^/Date\\((\\d+)\\)/$", "$1");
-                            }
-
-                            MensajesItems.add(new lvMensajesItems(
-                                    mensaje.getInt("IdMensaje"),
-                                    mensaje.getInt("Via"),
-                                    mensaje.getInt("Estado"),
-                                    Long.parseLong(value),
-                                    mensaje.getString("Texto")
-                            ));
-                        }
-                        publishProgress(1);
-                        break;
-                    case "NO ROWS":
-                        mensaje = jsonObj.get("Message").toString();
-                        publishProgress(2);
-                        break;
-                    default:
-                        mensaje = jsonObj.get("Message").toString();
-                        publishProgress(3);
-                        break;
-                }
-                return null;
-
-            }
-            catch (JSONException e) {
-                mensaje = e.getMessage();
-                publishProgress(4);
-                return null;
-            }
-
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            if (values[0] == 1){
-                adapter = new lvMensajesItemsArrayAdapter(Frm_Principal.this,MensajesItems);
-                lvMensajes.setAdapter(null);
-                lvMensajes.setAdapter(adapter);
-            }
-            if (values[0] == 2){
-                lvMensajes.setAdapter(null);
             }
         }
     }

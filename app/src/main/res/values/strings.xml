@@ -18,4 +18,7 @@
     <string name="docente">DOCENTE</string>
     <string name="cargando_eventos_npor_favor_espere">Cargando Eventos\nPor favor espere...</string>
     <string name="m_dulo_representante">Módulo Representante</string>
+    <string name="confirmarCerrarSesion">¿Está seguro que desea cerrar su sesión?</string>
+    <string name="no">NO</string>
+    <string name="si">SI</string>
 </resources>

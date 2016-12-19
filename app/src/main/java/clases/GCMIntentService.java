@@ -12,18 +12,26 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.ListView;
 import android.widget.RemoteViews;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.plus.model.people.Person;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.villasoftgps.ebndsrrep.Frm_Principal;
 import com.villasoftgps.ebndsrrep.R;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 
+import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,38 +40,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import vistas.lvMensajesItems;
+
 public class GCMIntentService extends IntentService
 {
     private static NotificationManager mNotificationManager;
-    private Bundle extras;
     private static final String TAG = "EJVH";
-    private GoogleCloudMessaging GCM;
     private SharedPreferences sPrefs;
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
+    private static final String PROPERTY_CONVERSATIONS = "conversations";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_EXPIRATION_TIME = "onServerExpirationTimeMs";
     private static final int EXPIRATION_TIME_MS = 1000*3600*24*7;
-
-    private Set<String> setNot;
-    private String cedula;
-    private String mensaje;
-    private String tipoMensaje;
-    private String matricula;
-    private String fechaHora;
-    private String idNotificacion;
-    private String gcmId;
-    private String mostrado;
-    static int timeInADay = 86400000;
-    private Date fechaActual = null;
+    private Representante representante;
+    private lvMensajesItems mensaje;
+    private ArrayList<lvMensajesItems> conversaciones;
+    private Gson gson;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        fechaActual = new Date();
-        fechaActual.setTime(System.currentTimeMillis());
-        //timer.start();
+        representante = new Representante();
+        conversaciones = new ArrayList<>();
+        gson = new Gson();
     }
 
     public GCMIntentService() {
@@ -73,52 +74,96 @@ public class GCMIntentService extends IntentService
     @Override
     protected void onHandleIntent(Intent intent)
     {
-        /*Log.d(TAG + " NOTI","0");
-
-        if(fechaActual != null){
-            if(fechaActual.getTime() < (System.currentTimeMillis() - 10000)){
-                timer.start();
-            }
-        }
-
-        Log.d(TAG + " NOTI","1");
-
         //se instancia la herramienta de google cloud messaging
-        GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-
-        Log.d(TAG + " NOTI","2");
+        GoogleCloudMessaging GCM = GoogleCloudMessaging.getInstance(this);
 
         // se declara el tipo de mensaje entrante y se obtienen los extras en caso de existir
-        String messageType = gcm.getMessageType(intent);
-        extras = intent.getExtras();
-
-        Log.d(TAG + " NOTI","3");
+        String messageType = GCM.getMessageType(intent);
+        Bundle extras = intent.getExtras();
 
         // se verifica si hay extras en el mensaje entrante
         if (!extras.isEmpty())
         {
-            Log.d(TAG + " NOTI","4");
-
             if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType))
             {
-                Log.d(TAG + " NOTI","5");
 
-                cedula = extras.getString("cedula","");
-                matricula = extras.getString("matricula");
-                fechaHora = extras.getString("fecha","");
-                mensaje = extras.getString("mensaje", "");
-                gcmId = extras.getString("gcmid", "");
-                idNotificacion = extras.getString("idNotificacion", "");
-                tipoMensaje = extras.getString("tipoMensaje","");
-                mostrado = "0";
+                try {
+                    JSONObject jsonObj = new JSONObject(extras.getString("mensaje"));
+                    String result = jsonObj.get("Result").toString();
 
-                Log.d(TAG + " NOTI","6");
+                    if (sPrefs == null){
+                        sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+                    }
 
-                handleMessage();
+                    switch (result){
+                        case "INCOMING":
+                            JSONObject array = new JSONObject(jsonObj.get("Mensaje").toString());
+
+                            Log.d(TAG, jsonObj.get("Mensaje").toString());
+
+                            if (array.getInt("Via") == 0){ // se valida que sea un docente quien este enviando el msj
+                                // se convierte la fecha quitando caracteres no numericos
+                                Log.d(TAG, "1");
+
+                                String value = "";
+                                if (array.getString("fechaHora").matches("^/Date\\(\\d+\\)/$")) {
+                                    value = array.getString("fechaHora").replaceAll("^/Date\\((\\d+)\\)/$", "$1");
+                                }
+
+                                Log.d(TAG, "2");
+
+                                mensaje = new lvMensajesItems(
+                                        0,
+                                        array.getInt("IdMensaje"),
+                                        array.getInt("Via"),
+                                        array.getInt("IdDocente"),
+                                        array.getInt("IdRepresentante"),
+                                        array.getInt("Estado"),
+                                        Long.parseLong(value),
+                                        array.getString("Texto")
+                                );
+
+                                Log.d(TAG, "3");
+
+                                if (sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                                    Log.d(TAG, "4");
+
+                                    conversaciones.add(mensaje);
+                                    SharedPreferences.Editor sEditor = sPrefs.edit();
+                                    sEditor.putString(PROPERTY_CONVERSATIONS, gson.toJson(conversaciones));
+                                    sEditor.apply();
+                                }else{
+                                    Log.d(TAG, "5");
+                                    Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                                    conversaciones = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+                                    conversaciones.add(mensaje);
+                                    SharedPreferences.Editor sEditor = sPrefs.edit();
+                                    sEditor.putString(PROPERTY_CONVERSATIONS, gson.toJson(conversaciones));
+                                    sEditor.apply();
+                                }
+                                Log.d(TAG, "6");
+                                Frm_Principal.actualizarConversaciones();
+                                Log.d(TAG, "7");
+                            }
+
+                            break;
+                        case "UPDATE":
+
+                            break;
+                        default:
+                            // ERROR
+                            break;
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //handleMessage();
             }
         }
 
-        GCMBroadcastReceiver.completeWakefulIntent(intent);*/
+        GCMBroadcastReceiver.completeWakefulIntent(intent);
     }
 
     /*private void handleMessage() {
@@ -296,7 +341,7 @@ public class GCMIntentService extends IntentService
         return notification;
     }*/
 
-    private class AsyncActualizarEstadoNotificacion extends AsyncTask<String,Integer,String> {
+    /*private class AsyncActualizarEstadoNotificacion extends AsyncTask<String,Integer,String> {
         @Override
         protected String doInBackground(String... params) {
             Log.d(TAG + " NOTI", "A");
@@ -400,7 +445,7 @@ public class GCMIntentService extends IntentService
                 //guardarEnPrefs();
             }
         }
-    }
+    }*/
 
     private enum ModoLimpiarPrefs{
         DEL_NOTI_BY_ID,

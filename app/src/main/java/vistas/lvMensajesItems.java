@@ -3,20 +3,34 @@ package vistas;
 import java.util.Date;
 
 public class lvMensajesItems implements Comparable<lvMensajesItems> {
+    private int tempId = 0;
     private int idMensaje;
+    private int idRepresentante;
+    private int idDocente;
     private int via;
     private int status;
     private long fechaHora;
     private String mensaje;
     private Date fecha;
 
-    public lvMensajesItems(int idMensaje, int via, int status, long fechaHora, String mensaje){
+    public lvMensajesItems(int tempId, int idMensaje, int via, int idDocente, int idRepresentante, int status, long fechaHora, String mensaje){
+        this.tempId = tempId;
         this.idMensaje = idMensaje;
         this.via = via;
+        this.idDocente = idDocente;
+        this.idRepresentante = idRepresentante;
         this.status = status;
         this.fechaHora = fechaHora;
         this.mensaje = mensaje;
         this.fecha = new Date(fechaHora);
+    }
+
+    public int getTempId() {
+        return tempId;
+    }
+
+    public void setTempId(int tempId) {
+        this.tempId = tempId;
     }
 
     public int getIdMensaje() {
@@ -25,6 +39,22 @@ public class lvMensajesItems implements Comparable<lvMensajesItems> {
 
     public void setIdMensaje(int idMensaje) {
         this.idMensaje = idMensaje;
+    }
+
+    public int getIdRepresentante() {
+        return idRepresentante;
+    }
+
+    public void setIdRepresentante(int idRepresentante) {
+        this.idRepresentante = idRepresentante;
+    }
+
+    public int getIdDocente() {
+        return idDocente;
+    }
+
+    public void setIdDocente(int idDocente) {
+        this.idDocente = idDocente;
     }
 
     public int getVia() {

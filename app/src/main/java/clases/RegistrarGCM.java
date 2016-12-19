@@ -8,7 +8,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
-
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
 import org.json.JSONObject;
@@ -23,14 +22,14 @@ import java.io.IOException;
 public class RegistrarGCM {
     private GoogleCloudMessaging GCM;
     private SharedPreferences sPrefs;
-    private static final String PREF_NAME = "prefSchoolTool";
+    private String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_EXPIRATION_TIME = "onServerExpirationTimeMs";
     private static final int EXPIRATION_TIME_MS = 1000*3600*24*7;
-    private static final String SENDER_ID = "694700091939";
-    private static final String SERVER_API = "AIzaSyDSQz-z1HDEjO5va_RTTy2_91E1CzoLmm8";
+    private static final String SENDER_ID = "682250253357";
+    private static final String SERVER_API = "AIzaSyBT6gPrznb0eP_hwa4ZM8HvG2auAz6ayn0";
     private Context context;
     private String tipoUsuario;
     private Representante representante;
