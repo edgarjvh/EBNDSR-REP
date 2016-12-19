@@ -1,28 +1,19 @@
 package clases;
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.ListView;
-import android.widget.RemoteViews;
 
+import com.google.android.gms.fitness.data.Goal;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.plus.model.people.Person;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.villasoftgps.ebndsrrep.Frm_Principal;
-import com.villasoftgps.ebndsrrep.R;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.ksoap2.SoapEnvelope;
@@ -30,17 +21,10 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
-
 import java.lang.reflect.Type;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import vistas.lvMensajesItems;
+import static com.google.android.gms.gcm.GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE;
 
 public class GCMIntentService extends IntentService
 {
@@ -84,7 +68,8 @@ public class GCMIntentService extends IntentService
         // se verifica si hay extras en el mensaje entrante
         if (!extras.isEmpty())
         {
-            if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType))
+            //noinspection deprecation
+            if (MESSAGE_TYPE_MESSAGE.equals(messageType))
             {
 
                 try {
@@ -99,18 +84,13 @@ public class GCMIntentService extends IntentService
                         case "INCOMING":
                             JSONObject array = new JSONObject(jsonObj.get("Mensaje").toString());
 
-                            Log.d(TAG, jsonObj.get("Mensaje").toString());
-
                             if (array.getInt("Via") == 0){ // se valida que sea un docente quien este enviando el msj
                                 // se convierte la fecha quitando caracteres no numericos
-                                Log.d(TAG, "1");
 
                                 String value = "";
                                 if (array.getString("fechaHora").matches("^/Date\\(\\d+\\)/$")) {
                                     value = array.getString("fechaHora").replaceAll("^/Date\\((\\d+)\\)/$", "$1");
                                 }
-
-                                Log.d(TAG, "2");
 
                                 mensaje = new lvMensajesItems(
                                         0,
@@ -123,17 +103,12 @@ public class GCMIntentService extends IntentService
                                         array.getString("Texto")
                                 );
 
-                                Log.d(TAG, "3");
-
                                 if (sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
-                                    Log.d(TAG, "4");
-
                                     conversaciones.add(mensaje);
                                     SharedPreferences.Editor sEditor = sPrefs.edit();
                                     sEditor.putString(PROPERTY_CONVERSATIONS, gson.toJson(conversaciones));
                                     sEditor.apply();
                                 }else{
-                                    Log.d(TAG, "5");
                                     Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
                                     conversaciones = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
                                     conversaciones.add(mensaje);
@@ -141,13 +116,44 @@ public class GCMIntentService extends IntentService
                                     sEditor.putString(PROPERTY_CONVERSATIONS, gson.toJson(conversaciones));
                                     sEditor.apply();
                                 }
-                                Log.d(TAG, "6");
+
                                 Frm_Principal.actualizarConversaciones();
-                                Log.d(TAG, "7");
                             }
 
                             break;
                         case "UPDATE":
+
+                            /*
+                                Result = "UPDATE",
+                                IdMensaje = idMensaje,
+                                Estado = estado,
+                                Via = via,
+                                IdDocente = idDocente,
+                                IdRepresentante = idRepresentante
+                            */
+
+                            if (jsonObj.get("Via").toString().equals("1")){ // si el docente esta confirmando....
+                                if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
+                                    Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
+                                    conversaciones = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
+
+                                    for (int i = 0; i < conversaciones.size();i++){
+                                        if (conversaciones.get(i).getIdMensaje() == Integer.parseInt(jsonObj.get("IdMensaje").toString()) &&
+                                            conversaciones.get(i).getIdDocente() == Integer.parseInt(jsonObj.get("IdDocente").toString()) &&
+                                            conversaciones.get(i).getIdRepresentante() == Integer.parseInt(jsonObj.get("IdRepresentante").toString())){
+
+                                            conversaciones.get(i).setStatus(Integer.parseInt(jsonObj.get("Estado").toString()));
+                                            break;
+                                        }
+                                    }
+
+                                    SharedPreferences.Editor sEditor = sPrefs.edit();
+                                    sEditor.putString(PROPERTY_CONVERSATIONS, gson.toJson(conversaciones));
+                                    sEditor.apply();
+
+                                    Frm_Principal.actualizarConversaciones();
+                                }
+                            }
 
                             break;
                         default:
@@ -166,6 +172,46 @@ public class GCMIntentService extends IntentService
         GCMBroadcastReceiver.completeWakefulIntent(intent);
     }
 
+    private class AsyncConfirmarRecepcion extends AsyncTask<Object,Integer,Integer>{
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object>  parametros = new ArrayList<>(3);
+            parametros.add(0, "idMensaje*" + params[0]);
+            parametros.add(1, "estado*" + params[1]);
+            parametros.add(2, "confirmarMensaje");
+
+            respuesta ws = new respuesta();
+            Object response = ws.getData(parametros);
+
+            try
+            {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                switch (result) {
+                    case "CONFIRMADO":
+                        /*
+                                Result = "CONFIRMADO",
+                                Via = via,
+                                IdDocente = idDocente,
+                                IdRepresentante = idRepresentante,
+                                IdMensaje = idMensaje,
+                                Estado = estado
+                        */
+
+                        Log.d("EJVH CONFIRMACION", response.toString());
+                        break;
+                    default:
+                        break;
+                }
+                return null;
+            }
+            catch (JSONException e) {
+                return null;
+            }
+        }
+    }
     /*private void handleMessage() {
         Log.d(TAG + " NOTI","7");
 
@@ -447,12 +493,6 @@ public class GCMIntentService extends IntentService
         }
     }*/
 
-    private enum ModoLimpiarPrefs{
-        DEL_NOTI_BY_ID,
-        DEL_NOTI_BY_SHOWED_REPORTED,
-        DEL_NOTI_OLDER_3DAYS
-    }
-
     /*private void limpiarPrefs(ModoLimpiarPrefs modo){
         Log.d(TAG + " NOTI","35");
         if(sPrefs == null){
@@ -572,4 +612,41 @@ public class GCMIntentService extends IntentService
         timer.cancel();
         timer.start();
     }*/
+
+    private class respuesta {
+        Object getData(ArrayList<Object> parametros){
+            Object data;
+            String namespace = "http://schooltool.org/";
+            String direccion = "http://154.42.65.212:9600/schooltool.asmx";
+            String metodo = parametros.get(parametros.size() - 1).toString();
+            String soapAction = namespace + metodo;
+
+            SoapObject request = new SoapObject(namespace, metodo);
+            String property[];
+            PropertyInfo pi;
+
+            for (int i = 0; i < parametros.size() - 1; i++){
+                property = parametros.get(i).toString().split("\\*");
+                pi = new PropertyInfo();
+                pi.setName(property[0]);
+                pi.setValue(property[1]);
+                pi.setType(property[1].getClass());
+                request.addProperty(pi);
+            }
+
+            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+            envelope.dotNet = true;
+            envelope.setOutputSoapObject(request);
+            HttpTransportSE httpTransport = new HttpTransportSE(direccion);
+
+            try {
+                httpTransport.call(soapAction, envelope);
+                data = envelope.getResponse();
+            } catch (Exception exception) {
+                data = exception.toString();
+            }
+
+            return data;
+        }
+    }
 }
