@@ -26,6 +26,7 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TextView;
 import com.google.gson.Gson;
@@ -74,7 +75,7 @@ public class Frm_Principal extends Activity {
     String mensaje = "";
     lvCalendarioItems CalendarioItems[];
     static ArrayList<lvMensajesItems> MensajesItems;
-    ArrayList<SpinnerItems> spinnerItems;
+    static ArrayList<SpinnerItems> spinnerItems;
     ArrayList<lvMenuItems> MenuItems;
     private static Representante representante;
     private ListView lvCalendario;
@@ -88,7 +89,7 @@ public class Frm_Principal extends Activity {
     View sinEventos;
     View cargandoEventos;
     static lvMensajesItemsArrayAdapter adapter;
-    SpinnerItemsArrayAdapter spinnerAdapter;
+    static SpinnerItemsArrayAdapter spinnerAdapter;
     lvMenuArrayAdapter menuAdapter;
     static Spinner cboDocentes;
     static Frm_Principal principal;
@@ -247,8 +248,15 @@ public class Frm_Principal extends Activity {
                     View viewDocente = cboDocentes.getSelectedView();
 
                     if (viewDocente != null){
+                        TextView lblRegistrado = (TextView) viewDocente.findViewById(R.id.lblRegistrado);
                         TextView lblIdDocente = (TextView) viewDocente.findViewById(R.id.lblIdDocente);
                         int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+                        int registrado = Integer.parseInt(lblRegistrado.getText().toString());
+
+                        if (registrado == 0){
+                            mostrarMensaje(false,1,"Este docente no ha sido registrado en el sistema\nMensaje no enviado!");
+                            return;
+                        }
 
                         if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
                             Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
@@ -471,8 +479,21 @@ public class Frm_Principal extends Activity {
         });
     }
 
-    public static void actualizarListaDocentes(){
-
+    public static void actualizarRegistroDocente(final int idDocente, final int registrado){
+        principal.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (spinnerItems.size() > 0){
+                    for (int i = 0; i < spinnerItems.size(); i++){
+                        if (spinnerItems.get(i).getIdDocente() == idDocente){
+                            spinnerItems.get(i).setRegistrado(registrado);
+                            spinnerAdapter.notifyDataSetChanged();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public static void cerrarSesion(){
@@ -629,7 +650,6 @@ public class Frm_Principal extends Activity {
             super.onProgressUpdate(values);
         }
     }
-
 
     private class AsyncCargarDocentes extends AsyncTask<Object,Integer, Integer>{
 

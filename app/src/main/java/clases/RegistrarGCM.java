@@ -112,7 +112,7 @@ public class RegistrarGCM {
         final String SOAP_ACTION = NAMESPACE + METHOD_NAME;
 
         SoapObject request = new SoapObject(NAMESPACE, METHOD_NAME);
-        request.addProperty("tipo", 1);
+        request.addProperty("tipo", 1); // 0 = registro de docente; 1 = registro de representante
         request.addProperty("id", representante.getId());
         request.addProperty("regID", regId);
         request.addProperty("apiServidor", SERVER_API);

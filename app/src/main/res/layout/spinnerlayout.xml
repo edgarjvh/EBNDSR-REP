@@ -54,5 +54,11 @@
             android:layout_height="wrap_content"
             android:id="@+id/lblIdDocente"
             android:visibility="gone"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/lblRegistrado"
+            android:visibility="gone"/>
     </RelativeLayout>
 </RelativeLayout>

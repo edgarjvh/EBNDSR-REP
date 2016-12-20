@@ -48,11 +48,13 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
 
         ImageView imgPerfil = (ImageView)convertView.findViewById(R.id.imgPerfil);
         TextView lblId = (TextView)convertView.findViewById(R.id.lblIdDocente);
+        TextView lblRegistrado = (TextView)convertView.findViewById(R.id.lblRegistrado);
         TextView lblApellidos = (TextView)convertView.findViewById(R.id.lblApellidos);
         TextView lblNombres = (TextView)convertView.findViewById(R.id.lblNombres);
 
         imgPerfil.setImageResource(R.drawable.teacher_icon);
         lblId.setText(String.format(new Locale("es","ES"),"%1$d",docente.getIdDocente()));
+        lblRegistrado.setText(String.format(new Locale("es","ES"),"%1$d",docente.getRegistrado()));
         lblApellidos.setText(docente.getApellidos());
         lblNombres.setText(docente.getNombres());
 

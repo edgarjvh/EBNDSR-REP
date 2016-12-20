@@ -164,8 +164,14 @@ public class GCMIntentService extends IntentService
                             }
                             break;
 
-                        case "REGISTERED":
+                        case "DOCREGISTERED":
+                            Log.d("EJVH DOCREGISTERED", "idDocente: " + jsonObj.get("IdDocente").toString());
+                            Frm_Principal.actualizarRegistroDocente(Integer.parseInt(jsonObj.get("IdDocente").toString()), 1);
+                            break;
 
+                        case "DOCUNREGISTERED":
+                            Log.d("EJVH DOCUNREGISTERED", "idDocente: " + jsonObj.get("IdDocente").toString());
+                            Frm_Principal.actualizarRegistroDocente(Integer.parseInt(jsonObj.get("IdDocente").toString()), 0);
                             break;
                         default:
                             // ERROR
