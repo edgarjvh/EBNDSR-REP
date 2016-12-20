@@ -99,28 +99,33 @@ public class lvMensajesItemsArrayAdapter extends BaseAdapter {
             mensajeHolder.lblFechaHora.setText(df.format(fecha.getTime()));
             mensajeHolder.lblMensaje.setText(mensaje.getMensaje());
 
-
-            switch (mensaje.getStatus()){
-                case STATUS_SENT:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.sent_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                case STATUS_RECEIVED:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.received_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                case STATUS_READ:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.read_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                default:
-                    mensajeHolder.imgStatus.setVisibility(View.GONE);
-                    mensajeHolder.pbarStatus.setVisibility(View.VISIBLE);
-                    break;
+            if (type == ROW_REP){
+                switch (mensaje.getStatus()){
+                    case STATUS_SENT:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.sent_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    case STATUS_RECEIVED:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.received_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    case STATUS_READ:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.read_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    default:
+                        mensajeHolder.imgStatus.setVisibility(View.GONE);
+                        mensajeHolder.pbarStatus.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }else{
+                mensajeHolder.imgStatus.setVisibility(View.GONE);
+                mensajeHolder.pbarStatus.setVisibility(View.GONE);
             }
+
         }else{
             lvMensajesItems prevMsg = data.get(pos - 1);
             Calendar prevFecha = Calendar.getInstance(); // fecha
@@ -137,29 +142,32 @@ public class lvMensajesItemsArrayAdapter extends BaseAdapter {
             mensajeHolder.lblHeader.setVisibility(prevHeader.equals(curHeader) ? View.GONE : View.VISIBLE);
             mensajeHolder.lblFechaHora.setText(df.format(curFecha.getTime()));
             mensajeHolder.lblMensaje.setText(mensaje.getMensaje());
-            mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-            mensajeHolder.pbarStatus.setVisibility(View.GONE);
 
-            switch (mensaje.getStatus()){
-                case STATUS_SENT:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.sent_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                case STATUS_RECEIVED:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.received_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                case STATUS_READ:
-                    mensajeHolder.imgStatus.setImageResource(R.drawable.read_status_icon);
-                    mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
-                    mensajeHolder.pbarStatus.setVisibility(View.GONE);
-                    break;
-                default:
-                    mensajeHolder.imgStatus.setVisibility(View.GONE);
-                    mensajeHolder.pbarStatus.setVisibility(View.VISIBLE);
-                    break;
+            if (type == ROW_REP){
+                switch (mensaje.getStatus()){
+                    case STATUS_SENT:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.sent_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    case STATUS_RECEIVED:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.received_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    case STATUS_READ:
+                        mensajeHolder.imgStatus.setImageResource(R.drawable.read_status_icon);
+                        mensajeHolder.imgStatus.setVisibility(View.VISIBLE);
+                        mensajeHolder.pbarStatus.setVisibility(View.GONE);
+                        break;
+                    default:
+                        mensajeHolder.imgStatus.setVisibility(View.GONE);
+                        mensajeHolder.pbarStatus.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }else{
+                mensajeHolder.imgStatus.setVisibility(View.GONE);
+                mensajeHolder.pbarStatus.setVisibility(View.GONE);
             }
         }
 

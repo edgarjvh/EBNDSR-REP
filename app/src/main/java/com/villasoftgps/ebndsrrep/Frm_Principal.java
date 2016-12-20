@@ -296,6 +296,52 @@ public class Frm_Principal extends Activity {
                                     df.format(new Date(fechaEnvio))
                             );
                         }
+                        else
+                        {
+                            ArrayList<lvMensajesItems> newMensaje = new ArrayList<>();
+
+                            long fechaEnvio = System.currentTimeMillis();
+
+                            // se crea el nuevo objeto mensaje
+                            newMensaje.add(new lvMensajesItems(
+                                    newMensaje.size() + 1, // tempID
+                                    0,                     // idMensaje
+                                    representante.getId(), // idRepresentante
+                                    idDocente,             // idDocente
+                                    1,                     // via
+                                    3,                     // status 3 = pbar visible
+                                    fechaEnvio,
+                                    txtMensaje.getText().toString())
+                            );
+
+                            gson = new Gson();
+                            SharedPreferences.Editor sEditor = sPrefs.edit();
+                            sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
+                            sEditor.apply();
+
+                            actualizarConversaciones();
+
+                            /*
+                            parametros.add(0, "tempId*" + params[0]);
+                            parametros.add(1, "via*" + params[1]);
+                            parametros.add(2, "idRepresentante*" + params[2]);
+                            parametros.add(3, "idDocente*" + params[3]);
+                            parametros.add(4, "texto*" + params[4]);
+                            parametros.add(5, "fechaHora*" + params[5]);
+                            parametros.add(6, "enviarMensaje");
+                            */
+
+                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("es","ES"));
+
+                            new AsyncEnviarMensaje().execute(
+                                    newMensaje.size(),
+                                    1,
+                                    representante.getId(),
+                                    idDocente,
+                                    txtMensaje.getText().toString(),
+                                    df.format(new Date(fechaEnvio))
+                            );
+                        }
                     }
 
                     txtMensaje.setText(null);
@@ -425,26 +471,58 @@ public class Frm_Principal extends Activity {
         });
     }
 
-    /*public static void agregarMensajeRecibido(final lvMensajesItems mensaje){
+    public static void actualizarListaDocentes(){
 
-        principal.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                View view = cboDocentes.getSelectedView();
+    }
 
-                if (view != null){
-                    TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
-                    int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+    public static void cerrarSesion(){
+        sPrefs = principal.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
 
-                    if (mensaje.getIdDocente() == idDocente && representante.getId() == mensaje.getIdRepresentante()){
-                        MensajesItems.add(mensaje);
-                        adapter.notifyDataSetChanged();
-                        lvMensajes.setSelection(MensajesItems.size() - 1);
-                    }
-                }
+        Representante representante = gson.fromJson(sPrefs.getString(PROPERTY_USER,""),Representante.class);
+        new AsyncEliminarGcm().execute(representante.getId(),0);
+
+        SharedPreferences.Editor sEditor = sPrefs.edit();
+        sEditor.putString(PROPERTY_USER, "");
+        sEditor.putString(PROPERTY_REG_ID, "");
+        sEditor.putString(PROPERTY_CONVERSATIONS, "");
+        sEditor.apply();
+
+        Intent frm = new Intent(principal, Frm_Login.class);
+        principal.startActivity(frm);
+    }
+
+    private static class AsyncEliminarGcm extends AsyncTask<Object,Integer,Integer>{
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object>  parametros = new ArrayList<>(3);
+            parametros.add(0, "idRepresentante*" + params[0]);
+            parametros.add(1, "origen*" + params[1]);
+            parametros.add(2, "eliminarGcmRep");
+
+            respuesta ws = new respuesta();
+            Object response = ws.getData(parametros);
+
+            try {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                Log.d("EJVH EliminaGcmRep", result);
+
+                return 1;
+            } catch (JSONException e) {
+                return 0;
             }
-        });
-    }*/
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if (integer == 1){
+                principal.finish();
+            }
+        }
+    }
 
     private void ocultarTeclado(){
         // Check if no view has focus:
@@ -565,9 +643,6 @@ public class Frm_Principal extends Activity {
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
 
-            Log.d("EJVH DOC", response.getClass().toString());
-            Log.d("EJVH DOC", response.toString());
-
             try
             {
                 JSONObject jsonObj = new JSONObject(response.toString());
@@ -581,9 +656,8 @@ public class Frm_Principal extends Activity {
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject docente = array.getJSONObject(i);
 
-                            Log.d("EJVH idDocente", Integer.toString(docente.getInt("Id")));
-
                             spinnerItems.add(new SpinnerItems(
+                                    docente.getInt("Registrado"),
                                     docente.getInt("Id"),
                                     docente.getString("Apellidos"),
                                     docente.getString("Nombres")
@@ -658,7 +732,6 @@ public class Frm_Principal extends Activity {
 
         @Override
         protected Integer doInBackground(Object... params) {
-
             publishProgress(0);
             ArrayList<Object>  parametros = new ArrayList<>(4);
             parametros.add(0, "Id*" + params[0]);
@@ -780,7 +853,7 @@ public class Frm_Principal extends Activity {
         }
     }
 
-    private class respuesta {
+    private static class respuesta {
         Object getData(ArrayList<Object> parametros){
             Object data;
             String namespace = "http://schooltool.org/";

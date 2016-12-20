@@ -71,7 +71,6 @@ public class GCMIntentService extends IntentService
             //noinspection deprecation
             if (MESSAGE_TYPE_MESSAGE.equals(messageType))
             {
-
                 try {
                     JSONObject jsonObj = new JSONObject(extras.getString("mensaje"));
                     String result = jsonObj.get("Result").toString();
@@ -154,6 +153,18 @@ public class GCMIntentService extends IntentService
                                     Frm_Principal.actualizarConversaciones();
                                 }
                             }
+
+                            break;
+                        case "UNREGISTERED":
+                            gson = new Gson();
+                            representante = gson.fromJson(sPrefs.getString(PROPERTY_USER,""),Representante.class);
+
+                            if (representante.getId() == Integer.parseInt(jsonObj.get("IdRepresentante").toString())){
+                                Frm_Principal.cerrarSesion();
+                            }
+                            break;
+
+                        case "REGISTERED":
 
                             break;
                         default:

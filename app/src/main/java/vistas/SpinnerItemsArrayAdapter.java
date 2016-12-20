@@ -1,6 +1,7 @@
 package vistas;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +55,14 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
         lblId.setText(String.format(new Locale("es","ES"),"%1$d",docente.getIdDocente()));
         lblApellidos.setText(docente.getApellidos());
         lblNombres.setText(docente.getNombres());
+
+        if(docente.getRegistrado() == 0){
+            lblApellidos.setTextColor(Color.parseColor("#8b0101"));
+            lblNombres.setTextColor(Color.parseColor("#8b0101"));
+        }else{
+            lblApellidos.setTextColor(Color.parseColor("#d6c400"));
+            lblNombres.setTextColor(Color.parseColor("#d6c400"));
+        }
         return convertView;
     }
 }

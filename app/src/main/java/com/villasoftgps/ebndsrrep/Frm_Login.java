@@ -2,6 +2,7 @@ package com.villasoftgps.ebndsrrep;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import com.google.gson.Gson;
@@ -24,6 +26,7 @@ import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 import java.util.ArrayList;
 import clases.Representante;
+import controles.AutoResizeTextView;
 import vistas.CustomProgress;
 
 public class Frm_Login extends Activity {
@@ -92,40 +95,54 @@ public class Frm_Login extends Activity {
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
 
-            Log.d("EJVH", response.getClass().toString());
-            Log.d("EJVH", response.toString());
-
             try {
                 JSONObject json = new JSONObject(response.toString());
 
                 String result = json.get("Result").toString();
 
-                if (result.equals("OK")){
-                    JSONObject array = new JSONObject(json.get("Representante").toString());
+                switch (result) {
+                    case "OK": {
+                        JSONObject array = new JSONObject(json.get("Representante").toString());
 
-                    representante = new Representante();
-                    representante.setId(array.getInt("Id"));
-                    representante.setCedula(array.getInt("Cedula"));
-                    representante.setNombres(array.get("Nombres").toString());
-                    representante.setApellidos(array.get("Apellidos").toString());
-                    representante.setTelefono1(array.getInt("Telefono1"));
-                    representante.setTelefono2(array.getInt("Telefono2"));
-                    representante.setDireccion(array.get("Direccion").toString());
-                    publishProgress(1);
-                    return 1;
+                        representante = new Representante();
+                        representante.setId(array.getInt("Id"));
+                        representante.setCedula(array.getInt("Cedula"));
+                        representante.setNombres(array.get("Nombres").toString());
+                        representante.setApellidos(array.get("Apellidos").toString());
+                        representante.setTelefono1(array.getInt("Telefono1"));
+                        representante.setTelefono2(array.getInt("Telefono2"));
+                        representante.setDireccion(array.get("Direccion").toString());
+                        publishProgress(1);
+                        return 1;
 
-                }else{
-                    mensaje = json.get("Message").toString();
-                    publishProgress(2);
-                    return 0;
+                    }
+                    case "REGISTERED": {
+                        JSONObject array = new JSONObject(json.get("Representante").toString());
+
+                        representante = new Representante();
+                        representante.setId(array.getInt("Id"));
+                        representante.setCedula(array.getInt("Cedula"));
+                        representante.setNombres(array.get("Nombres").toString());
+                        representante.setApellidos(array.get("Apellidos").toString());
+                        representante.setTelefono1(array.getInt("Telefono1"));
+                        representante.setTelefono2(array.getInt("Telefono2"));
+                        representante.setDireccion(array.get("Direccion").toString());
+                        publishProgress(2);
+                        return 1;
+                    }
+                    default:
+                        mensaje = json.get("Message").toString();
+                        publishProgress(3);
+                        return 0;
                 }
             } catch (JSONException e) {
                 mensaje = e.getMessage();
-                publishProgress(3);
+                publishProgress(4);
                 return 0;
             }
         }
 
+        @SuppressWarnings("ConstantConditions")
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
@@ -140,9 +157,20 @@ public class Frm_Login extends Activity {
                     mostrarMensaje(true, false, 0, mensaje);
                     break;
                 case 2:
-                    mostrarMensaje(false,false,2,mensaje);
+                    registeredDialog cpd = new registeredDialog(Frm_Login.this, representante);
+                    cpd.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    cpd.setCanceledOnTouchOutside(false);
+                    cpd.show();
+
+                    if(dialogMessage != null) {
+                        dialogMessage.dismiss();
+                        dialogMessage = null;
+                    }
                     break;
                 case 3:
+                    mostrarMensaje(false,false,2,mensaje);
+                    break;
+                case 4:
                     mostrarMensaje(false,false,2,mensaje);
                     break;
             }
@@ -154,7 +182,7 @@ public class Frm_Login extends Activity {
         }
     }
 
-    private class respuesta {
+    private static class respuesta {
         Object getData(ArrayList<Object> parametros){
             Object data;
             String namespace = "http://schooltool.org/";
@@ -199,7 +227,8 @@ public class Frm_Login extends Activity {
         }
     }
 
-    private void mostrarMensaje(Boolean esBienvenida, Boolean enProgreso,int icono, String msj){
+    @SuppressWarnings("ConstantConditions")
+    private void mostrarMensaje(Boolean esBienvenida, Boolean enProgreso, int icono, String msj){
         try{
             if(esBienvenida){
                 if(dialogMessage != null) {
@@ -277,6 +306,76 @@ public class Frm_Login extends Activity {
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    public class registeredDialog extends Dialog{
+
+        Activity a;
+        Representante representante;
+
+        registeredDialog(Activity a, Representante representante) {
+            super(a);
+            this.a = a;
+            this.representante = representante;
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+            setContentView(R.layout.registereddialog);
+
+            AutoResizeTextView lblApellidos = (AutoResizeTextView)findViewById(R.id.lblApellidos);
+            AutoResizeTextView lblNombres = (AutoResizeTextView)findViewById(R.id.lblNombres);
+            Button btnSi = (Button) findViewById(R.id.btnSi);
+            Button btnNo = (Button) findViewById(R.id.btnNo);
+
+            lblApellidos.setText(representante.getApellidos());
+            lblNombres.setText(representante.getNombres());
+
+            btnSi.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    new AsyncEliminarGcm().execute(representante.getId(),1);
+
+                    mensaje = getResources().getString(R.string.bienvenidoCliente) + "\n" + representante.getNombres() + " " + representante.getApellidos();
+                    mostrarMensaje(true, false, 0, mensaje);
+                    dismiss();
+                }
+            });
+
+            btnNo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+        }
+    }
+
+    private static class AsyncEliminarGcm extends AsyncTask<Object,Integer,Integer>{
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object>  parametros = new ArrayList<>(2);
+            parametros.add(0, "idRepresentante*" + params[0]);
+            parametros.add(1, "origen*" + params[1]);
+            parametros.add(2, "eliminarGcmRep");
+
+            respuesta ws = new respuesta();
+            Object response = ws.getData(parametros);
+
+            try {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                Log.d("EJVH EliminaGcmRep", result);
+
+                return 1;
+            } catch (JSONException e) {
+                return 0;
+            }
         }
     }
 }
