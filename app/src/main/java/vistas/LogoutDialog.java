@@ -19,6 +19,8 @@ public class LogoutDialog extends Dialog {
     private SharedPreferences sPrefs;
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
+    private static final String PROPERTY_REG_ID = "registration_id";
+    private static final String PROPERTY_CONVERSATIONS = "conversations";
 
     public LogoutDialog(Activity a){
         super(a);
@@ -41,6 +43,8 @@ public class LogoutDialog extends Dialog {
 
                 SharedPreferences.Editor sEditor = sPrefs.edit();
                 sEditor.putString(PROPERTY_USER, "");
+                sEditor.putString(PROPERTY_REG_ID, "");
+                sEditor.putString(PROPERTY_CONVERSATIONS, "");
                 sEditor.apply();
 
                 Intent frm = new Intent(getContext(), Frm_Login.class);
