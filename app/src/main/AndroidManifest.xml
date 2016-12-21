@@ -53,6 +53,7 @@
         </activity>
         <activity android:name=".Frm_Principal" />
         <activity android:name=".Frm_Perfil"/>
+        <activity android:name="com.soundcloud.android.crop.CropImageActivity"/>
         <receiver
             android:name="clases.GCMBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND">

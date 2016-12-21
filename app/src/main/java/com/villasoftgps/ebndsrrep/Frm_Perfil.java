@@ -4,14 +4,20 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
+import com.soundcloud.android.crop.Crop;
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,6 +27,8 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+
+import java.io.File;
 import java.util.ArrayList;
 import clases.Representante;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -61,10 +69,12 @@ public class Frm_Perfil extends Activity {
                     public void onClick(DialogInterface dialog, int seleccion) {
                         switch (seleccion){
                             case 0:
-
+                                abrirCamara();
                                 break;
                             case 1:
-
+                                Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                                intent.setType("image/*");
+                                startActivityForResult(intent.createChooser(intent,"Seleccione el origen"),FROM_GALLERY);
                                 break;
                             default:
                                 dialog.dismiss();
@@ -75,8 +85,6 @@ public class Frm_Perfil extends Activity {
                 builder.show();
             }
         });
-
-
 
         lvPerfil.addHeaderView(header);
         data = new ArrayList<>();
@@ -104,9 +112,6 @@ public class Frm_Perfil extends Activity {
                 1
         ));
 
-        Log.d("EJVH Telefono 1", representante.getTelefono1());
-        Log.d("EJVH Telefono 2", representante.getTelefono2());
-
         String telefono2 = "";
 
         if (!representante.getTelefono2().equals("")){
@@ -122,6 +127,25 @@ public class Frm_Perfil extends Activity {
         ));
 
         new AsyncRepresentados().execute(representante.getId());
+    }
+
+    private void abrirCamara() {
+        File file = new File(Environment.getExternalStorageDirectory(),MEDIA_DIRECTORY);
+        file.mkdirs();
+
+        String path = Environment.getExternalStorageDirectory() + File.separator +
+                MEDIA_DIRECTORY + File.separator + PICTURE_NAME;
+
+        File newFile = new File(path);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra("crop","true");
+        intent.putExtra("aspectX",1);
+        intent.putExtra("aspectY",1);
+        intent.putExtra("outputX",200);
+        intent.putExtra("outputY",200);
+        intent.putExtra("return-data",true);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(newFile));
+        startActivityForResult(intent,FROM_CAMERA);
     }
 
     private class AsyncRepresentados extends AsyncTask<Object,Integer,Integer>{
@@ -307,5 +331,33 @@ public class Frm_Perfil extends Activity {
 
             return data;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case FROM_GALLERY:
+                if (resultCode == RESULT_OK && data != null){
+                    Uri path = data.getData();
+                    profile_image.setImageURI(path);
+                }
+                break;
+            case FROM_CAMERA:
+                if (resultCode == RESULT_OK){
+                    String dir = Environment.getExternalStorageDirectory() + File.separator +
+                            MEDIA_DIRECTORY + File.separator + PICTURE_NAME;
+
+                    decodeBitmap(dir);
+                }
+                break;
+        }
+    }
+
+    private void decodeBitmap(String dir) {
+        Bitmap bitmap;
+        bitmap = BitmapFactory.decodeFile(dir);
+        profile_image.setImageBitmap(bitmap);
     }
 }
