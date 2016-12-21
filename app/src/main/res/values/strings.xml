@@ -25,4 +25,5 @@
     <string name="apellidos">APELLIDOS</string>
     <string name="nombres">NOMBRES</string>
     <string name="se_cerrar_n_las_dem_s_sesiones_que_haya_iniciado_en_otros_dispositivos_desea_continuar">Se cerrarán las demás sesiones que haya iniciado en otros dispositivos. ¿Desea continuar?</string>
+    <string name="m_dulo_representantes">Módulo Representantes</string>
 </resources>

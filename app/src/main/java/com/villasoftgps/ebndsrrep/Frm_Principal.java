@@ -168,8 +168,9 @@ public class Frm_Principal extends Activity {
 
         MenuItems = new ArrayList<>();
 
-        MenuItems.add(0,new lvMenuItems(R.drawable.profile_icon,"Ver mi Perfil"));
-        MenuItems.add(1,new lvMenuItems(R.drawable.logout_icon,"Cerrar Sesión"));
+        MenuItems.add(new lvMenuItems(R.drawable.profile_icon,"Ver Perfil"));
+        MenuItems.add(new lvMenuItems(R.drawable.change_pass_icon,"Cambiar Contraseña"));
+        MenuItems.add(new lvMenuItems(R.drawable.logout_icon,"Cerrar Sesión"));
 
         lvCalendario = (ListView)findViewById(R.id.lvCalendario);
         lvMensajes = (ListView)findViewById(R.id.lvMensajes);
@@ -188,9 +189,16 @@ public class Frm_Principal extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position){
                     case 1: // ver mi perfil
+                        Intent frm = new Intent(Frm_Principal.this,Frm_Perfil.class);
+                        startActivity(frm);
+                        if (drawerLayout.isDrawerOpen(lvMenu)){
+                            drawerLayout.closeDrawers();
+                        }
+                        break;
+                    case 2: // cambiar contraseña
 
                         break;
-                    case 2: // cerrar sesion
+                    case 3: // cerrar sesion
                         LogoutDialog cpd = new LogoutDialog(Frm_Principal.this);
                         cpd.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                         cpd.setCanceledOnTouchOutside(false);
@@ -372,12 +380,7 @@ public class Frm_Principal extends Activity {
             }
         });
 
-        String nombre = "Bienvenido(a)\n" + "<font color='#0808e1'>" +
-                representante.getApellidos() + ", " +
-                representante.getNombres() + "</font>";
-
         AutoResizeTextView lblNombre = (AutoResizeTextView)findViewById(R.id.lblNombre);
-        lblNombre.setText(Html.fromHtml(nombre), TextView.BufferType.SPANNABLE);
 
         lblNombre.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -760,9 +763,6 @@ public class Frm_Principal extends Activity {
 
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
-
-            Log.d("EJVH", response.getClass().toString());
-            Log.d("EJVH", response.toString());
 
             try {
                 JSONObject jsonObj = new JSONObject(response.toString());
