@@ -5,12 +5,14 @@ public class lvPerfilItems {
     private String title;
     private String body;
     private String footer;
+    private int maxLines;
 
-    public lvPerfilItems(String header, String title, String body, String footer){
+    public lvPerfilItems(String header, String title, String body, String footer, int maxLines){
         this.header = header;
         this.title = title;
         this.body = body;
         this.footer = footer;
+        this.maxLines = maxLines;
     }
 
     public String getHeader() {
@@ -43,5 +45,13 @@ public class lvPerfilItems {
 
     public void setFooter(String footer) {
         this.footer = footer;
+    }
+
+    public int getMaxLines() {
+        return maxLines;
+    }
+
+    public void setMaxLines(int maxLines) {
+        this.maxLines = maxLines;
     }
 }

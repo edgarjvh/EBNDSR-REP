@@ -109,8 +109,8 @@ public class Frm_Login extends Activity {
                         representante.setCedula(array.getInt("Cedula"));
                         representante.setNombres(array.get("Nombres").toString());
                         representante.setApellidos(array.get("Apellidos").toString());
-                        representante.setTelefono1(array.getInt("Telefono1"));
-                        representante.setTelefono2(array.getInt("Telefono2"));
+                        representante.setTelefono1(array.getString("Telefono1"));
+                        representante.setTelefono2(array.getString("Telefono2"));
                         representante.setDireccion(array.get("Direccion").toString());
                         publishProgress(1);
                         return 1;
@@ -124,8 +124,8 @@ public class Frm_Login extends Activity {
                         representante.setCedula(array.getInt("Cedula"));
                         representante.setNombres(array.get("Nombres").toString());
                         representante.setApellidos(array.get("Apellidos").toString());
-                        representante.setTelefono1(array.getInt("Telefono1"));
-                        representante.setTelefono2(array.getInt("Telefono2"));
+                        representante.setTelefono1(array.getString("Telefono1"));
+                        representante.setTelefono2(array.getString("Telefono2"));
                         representante.setDireccion(array.get("Direccion").toString());
                         publishProgress(2);
                         return 1;

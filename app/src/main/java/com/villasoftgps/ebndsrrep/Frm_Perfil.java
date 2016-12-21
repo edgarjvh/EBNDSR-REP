@@ -1,10 +1,14 @@
 package com.villasoftgps.ebndsrrep;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -30,6 +34,12 @@ public class Frm_Perfil extends Activity {
     private static final String PROPERTY_USER = "user";
     private ListView lvPerfil;
     private ArrayList<lvPerfilItems> data;
+    private CircleImageView profile_image;
+    private static String APP_DIRECTORY = "myAppProfiles/";
+    private static String MEDIA_DIRECTORY = "media";
+    private static String PICTURE_NAME = "temporal.jpg";
+    private static final int FROM_CAMERA = 100;
+    private static final int FROM_GALLERY = 200;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,31 +49,37 @@ public class Frm_Perfil extends Activity {
 
         lvPerfil = (ListView) findViewById(R.id.lvPerfil);
         View header = getLayoutInflater().inflate(R.layout.lvperfilheader,null);
-        CircleImageView profile_image = (CircleImageView) header.findViewById(R.id.profile_image);
+        profile_image = (CircleImageView) header.findViewById(R.id.profile_image);
         profile_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(Frm_Perfil.this,"Click en imagen",Toast.LENGTH_LONG).show();
+                final CharSequence[] opciones = {"Desde Cámara", "Desde Galería", "Cancelar"};
+                final AlertDialog.Builder builder = new AlertDialog.Builder(Frm_Perfil.this);
+                builder.setTitle("Elige una opcion");
+                builder.setItems(opciones, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int seleccion) {
+                        switch (seleccion){
+                            case 0:
+
+                                break;
+                            case 1:
+
+                                break;
+                            default:
+                                dialog.dismiss();
+                                    break;
+                        }
+                    }
+                });
+                builder.show();
             }
         });
 
+
+
         lvPerfil.addHeaderView(header);
-
         data = new ArrayList<>();
-
-        data.add(new lvPerfilItems(
-                "Datos Personales",
-                "Cédula de Identidad",
-                "18370323",
-                ""
-        ));
-
-        data.add(new lvPerfilItems(
-                "",
-                "Nombres y Apellidos",
-                "EDGAR JOSÉ VILLASMIL HERNÁNDEZ",
-                ""
-        ));
 
         if (sPrefs == null){
             sPrefs = getSharedPreferences(PREF_NAME,MODE_PRIVATE);
@@ -71,6 +87,39 @@ public class Frm_Perfil extends Activity {
 
         Gson gson = new Gson();
         Representante representante = gson.fromJson(sPrefs.getString(PROPERTY_USER,""),Representante.class);
+
+        data.add(new lvPerfilItems(
+                "Datos Personales",
+                "Cédula de Identidad",
+                Integer.toString(representante.getCedula()),
+                "",
+                1
+        ));
+
+        data.add(new lvPerfilItems(
+                "",
+                "Nombres y Apellidos",
+                representante.getApellidos() + ", " + representante.getNombres(),
+                "",
+                1
+        ));
+
+        Log.d("EJVH Telefono 1", representante.getTelefono1());
+        Log.d("EJVH Telefono 2", representante.getTelefono2());
+
+        String telefono2 = "";
+
+        if (!representante.getTelefono2().equals("")){
+            telefono2 += " / " + representante.getTelefono2();
+        }
+
+        data.add(new lvPerfilItems(
+                "",
+                "Teléfonos",
+                representante.getTelefono1() + telefono2,
+                "",
+                1
+        ));
 
         new AsyncRepresentados().execute(representante.getId());
     }
@@ -90,44 +139,112 @@ public class Frm_Perfil extends Activity {
                 JSONObject jsonObj = new JSONObject(response.toString());
 
                 String result = jsonObj.get("Result").toString();
+                String representados = jsonObj.get("Representados").toString();
+                String institucion = jsonObj.get("Institucion").toString();
+
+                Log.d("EJVH representados", representados);
+                Log.d("EJVH institucion", institucion);
 
                 switch (result) {
                     case "OK":
-                        JSONArray array = jsonObj.getJSONArray("Representados");
 
-                        for (int i = 0; i < array.length(); i++) {
-                            JSONObject representado = array.getJSONObject(i);
+                        if (!representados.equals("")){
+                            JSONArray array = jsonObj.getJSONArray("Representados");
 
-                            String car;
+                            for (int i = 0; i < array.length(); i++) {
+                                JSONObject representado = array.getJSONObject(i);
 
-                            switch (representado.getInt("Grado")){
-                                case 1:
-                                    car = "ro";
-                                    break;
-                                case 2:
-                                    car = "do";
-                                    break;
-                                case 3:
-                                    car = "ro";
-                                    break;
-                                default:
-                                    car = "to";
-                                    break;
+                                String car;
+
+                                switch (representado.getInt("Grado")){
+                                    case 1:
+                                        car = "ro";
+                                        break;
+                                    case 2:
+                                        car = "do";
+                                        break;
+                                    case 3:
+                                        car = "ro";
+                                        break;
+                                    default:
+                                        car = "to";
+                                        break;
+                                }
+
+                                String footer =
+                                        "<font color='#045FB4'>Grado: </font> " + "<font color='#2E9AFE'>" + Integer.toString(representado.getInt("Grado")) + car + "</font>" +
+                                                "<font color='#045FB4'>, Sección: </font> " + "<font color='#2E9AFE'>\"" + representado.getString("Seccion") + "\"</font>" +
+                                                "<font color='#045FB4'>\nDocente: </font> " + "<font color='#2E9AFE'>" + representado.getString("Docente") + "</font>";
+
+
+                                data.add(new lvPerfilItems(
+                                        i == 0 ? "Mis Representados" : "",
+                                        "Apellidos y Nombres",
+                                        representado.getString("Apellidos") + ", " + representado.getString("Nombres"),
+                                        footer,
+                                        1
+                                ));
                             }
+                        }
 
-                            String footer =
-                                    "<font color='#045FB4'>Grado: </font> " + "<font color='#2E9AFE'>" + Integer.toString(representado.getInt("Grado")) + car + "</font>" +
-                                    "<font color='#045FB4'>, Sección: </font> " + "<font color='#2E9AFE'>\"" + representado.getString("Seccion") + "\"</font>" +
-                                    "<font color='#045FB4'>\nDocente: </font> " + "<font color='#2E9AFE'>" + representado.getString("Docente") + "</font>";
-
+                        if (!institucion.equals("")){
+                            JSONObject _institucion = new JSONObject(jsonObj.get("Institucion").toString());
 
                             data.add(new lvPerfilItems(
-                                    i == 0 ? "Mis Representados" : "",
-                                    "Apellidos y Nombres",
-                                    representado.getString("Apellidos") + ", " + representado.getString("Nombres"),
-                                    footer
+                                    "La Institución",
+                                    "Nombre",
+                                    _institucion.getString("Nombre"),
+                                    "",
+                                    1
+                            ));
+
+                            data.add(new lvPerfilItems(
+                                    "",
+                                    "Dirección",
+                                    _institucion.getString("Direccion"),
+                                    "",
+                                    3
+                            ));
+
+                            String telefono2 = "";
+
+                            if (!_institucion.getString("Telefono2").equals("")){
+                                telefono2 += " / " + _institucion.getString("Telefono2");
+                            }
+
+                            data.add(new lvPerfilItems(
+                                    "",
+                                    "Teléfonos",
+                                    _institucion.getString("Telefono1") + telefono2,
+                                    "",
+                                    1
+                            ));
+
+                            data.add(new lvPerfilItems(
+                                    "",
+                                    "Fundación",
+                                    Integer.toString(_institucion.getInt("Fundacion")),
+                                    "",
+                                    1
+                            ));
+
+                            data.add(new lvPerfilItems(
+                                    "",
+                                    "Director",
+                                    _institucion.getString("Director"),
+                                    "",
+                                    1
+                            ));
+
+                            data.add(new lvPerfilItems(
+                                    "",
+                                    "Etapas",
+                                    _institucion.getString("Etapas"),
+                                    "",
+                                    2
                             ));
                         }
+
                         publishProgress(1);
                         break;
                     case "NO ROWS":

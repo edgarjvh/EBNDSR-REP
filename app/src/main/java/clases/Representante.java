@@ -6,9 +6,9 @@ public class Representante implements Serializable {
     private int id;
     private String nombres;
     private String apellidos;
-    private int telefono1;
+    private String telefono1;
     private int cedula;
-    private int telefono2;
+    private String telefono2;
     private String direccion;
 
     public int getId() {
@@ -43,19 +43,19 @@ public class Representante implements Serializable {
         this.apellidos = apellidos;
     }
 
-    public int getTelefono1() {
+    public String getTelefono1() {
         return telefono1;
     }
 
-    public void setTelefono1(int telefono1) {
+    public void setTelefono1(String telefono1) {
         this.telefono1 = telefono1;
     }
 
-    public int getTelefono2() {
+    public String getTelefono2() {
         return telefono2;
     }
 
-    public void setTelefono2(int telefono2) {
+    public void setTelefono2(String telefono2) {
         this.telefono2 = telefono2;
     }
 

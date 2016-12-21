@@ -8,14 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
-
 import com.villasoftgps.ebndsrrep.R;
-
 import java.util.ArrayList;
-
 import controles.AutoResizeTextView;
-
-import static com.villasoftgps.ebndsrrep.R.id.html;
 
 public class lvPerfilArrayAdapter extends BaseAdapter {
     private Context c;
@@ -63,13 +58,13 @@ public class lvPerfilArrayAdapter extends BaseAdapter {
         }
 
         lvPerfilItems item = data.get(position);
-
         viewHolder.header.setText(item.getHeader());
         viewHolder.header.setVisibility(item.getHeader().equals("") ? View.GONE : View.VISIBLE);
 
         viewHolder.title.setText(item.getTitle());
         viewHolder.title.setVisibility(item.getTitle().equals("") ? View.GONE : View.VISIBLE);
 
+        viewHolder.body.setMaxLines(item.getMaxLines());
         viewHolder.body.setText(item.getBody());
         viewHolder.body.setVisibility(item.getBody().equals("") ? View.GONE : View.VISIBLE);
 
