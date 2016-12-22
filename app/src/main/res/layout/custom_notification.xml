@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background_notification"
+    android:padding="10dp">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/imgNotIcon"
+            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/representante_icon"
+            android:scaleType="fitCenter"
+            android:background="@drawable/background_circle"
+            android:contentDescription="@string/app_name"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/imgNotIcon"
+            android:layout_toEndOf="@+id/imgNotIcon"
+            android:layout_centerInParent="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/lblNombreDocente"
+                android:layout_marginBottom="5dp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:textColor="#144e0c"
+                android:layout_toLeftOf="@+id/lblFecha"
+                android:layout_toStartOf="@+id/lblFecha"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/lblFecha"
+                android:layout_marginBottom="5dp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:textColor="#144e0c"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/lblMensaje"
+                android:textStyle="italic"
+                android:textSize="15sp"
+                android:textColor="#000000"
+                android:layout_below="@+id/lblNombreDocente"/>
+        </RelativeLayout>
+</RelativeLayout>

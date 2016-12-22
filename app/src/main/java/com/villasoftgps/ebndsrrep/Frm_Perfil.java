@@ -2,7 +2,7 @@ package com.villasoftgps.ebndsrrep;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,8 +16,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
-import com.soundcloud.android.crop.Crop;
+import android.widget.Toast;
+
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,7 +29,6 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
-
 import java.io.File;
 import java.util.ArrayList;
 import clases.Representante;
@@ -48,6 +49,8 @@ public class Frm_Perfil extends Activity {
     private static String PICTURE_NAME = "temporal.jpg";
     private static final int FROM_CAMERA = 100;
     private static final int FROM_GALLERY = 200;
+    private static final int FROM_CROPPING = 300;
+    private Uri picUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,18 +70,59 @@ public class Frm_Perfil extends Activity {
                 builder.setItems(opciones, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int seleccion) {
-                        switch (seleccion){
-                            case 0:
-                                abrirCamara();
+                        try{
+                            switch (seleccion){
+                                case 0:
+                                    Intent intentCaptured = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                                    intentCaptured.putExtra(MediaStore.EXTRA_OUTPUT,
+                                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString());
+                                    // ******** code for crop image
+                                    intentCaptured.putExtra("crop", "true");
+                                    intentCaptured.putExtra("aspectX", 0);
+                                    intentCaptured.putExtra("aspectY", 0);
+                                    intentCaptured.putExtra("outputX", 200);
+                                    intentCaptured.putExtra("outputY", 150);
+
+                                    try {
+                                        intentCaptured.putExtra("return-data", true);
+                                        startActivityForResult(intentCaptured, FROM_CAMERA);
+                                    } catch (ActivityNotFoundException e) {
+                                        // Do nothing for now
+                                    }
+
                                 break;
-                            case 1:
-                                Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                                intent.setType("image/*");
-                                startActivityForResult(intent.createChooser(intent,"Seleccione el origen"),FROM_GALLERY);
+                                case 1:
+                                    Intent intent = new Intent();
+                                    // call android default gallery
+                                    intent.setType("image/*");
+                                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                                    // ******** code for crop image
+                                    intent.putExtra("crop", "true");
+                                    intent.putExtra("aspectX", 0);
+                                    intent.putExtra("aspectY", 0);
+                                    intent.putExtra("outputX", 200);
+                                    intent.putExtra("outputY", 150);
+
+                                    try {
+
+                                        intent.putExtra("return-data", true);
+                                        startActivityForResult(Intent.createChooser(intent,
+                                                "Seleccione el origen"), FROM_GALLERY);
+
+                                    } catch (ActivityNotFoundException e) {
+                                    // Do nothing for now
+                                    }
+
                                 break;
-                            default:
-                                dialog.dismiss();
+                                default:
+                                    dialog.dismiss();
                                     break;
+                            }
+                        }
+                        catch (ActivityNotFoundException anfe) {
+                            Toast toast = Toast.makeText(Frm_Perfil.this, "Este dispositivo no soporta esta acción", Toast.LENGTH_SHORT);
+                            toast.show();
                         }
                     }
                 });
@@ -127,25 +171,6 @@ public class Frm_Perfil extends Activity {
         ));
 
         new AsyncRepresentados().execute(representante.getId());
-    }
-
-    private void abrirCamara() {
-        File file = new File(Environment.getExternalStorageDirectory(),MEDIA_DIRECTORY);
-        file.mkdirs();
-
-        String path = Environment.getExternalStorageDirectory() + File.separator +
-                MEDIA_DIRECTORY + File.separator + PICTURE_NAME;
-
-        File newFile = new File(path);
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra("crop","true");
-        intent.putExtra("aspectX",1);
-        intent.putExtra("aspectY",1);
-        intent.putExtra("outputX",200);
-        intent.putExtra("outputY",200);
-        intent.putExtra("return-data",true);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(newFile));
-        startActivityForResult(intent,FROM_CAMERA);
     }
 
     private class AsyncRepresentados extends AsyncTask<Object,Integer,Integer>{
@@ -337,27 +362,24 @@ public class Frm_Perfil extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        switch (requestCode){
-            case FROM_GALLERY:
-                if (resultCode == RESULT_OK && data != null){
-                    Uri path = data.getData();
-                    profile_image.setImageURI(path);
-                }
-                break;
-            case FROM_CAMERA:
-                if (resultCode == RESULT_OK){
-                    String dir = Environment.getExternalStorageDirectory() + File.separator +
-                            MEDIA_DIRECTORY + File.separator + PICTURE_NAME;
+        if (data != null){
+            if (requestCode == FROM_CAMERA) {
+                Bundle extras = data.getExtras();
+                if (extras != null) {
+                    Bitmap photo = extras.getParcelable("data");
+                    profile_image.setImageBitmap(photo);
 
-                    decodeBitmap(dir);
                 }
-                break;
+            }
+
+            if (requestCode == FROM_GALLERY) {
+                Bundle extras2 = data.getExtras();
+                if (extras2 != null) {
+                    Bitmap photo = extras2.getParcelable("data");
+                    profile_image.setImageBitmap(photo);
+
+                }
+            }
         }
-    }
-
-    private void decodeBitmap(String dir) {
-        Bitmap bitmap;
-        bitmap = BitmapFactory.decodeFile(dir);
-        profile_image.setImageBitmap(bitmap);
     }
 }
