@@ -112,9 +112,9 @@ public class Frm_Login extends Activity {
                         representante.setTelefono1(array.getString("Telefono1"));
                         representante.setTelefono2(array.getString("Telefono2"));
                         representante.setDireccion(array.get("Direccion").toString());
+                        representante.setImagen(array.get("Imagen").toString());
                         publishProgress(1);
                         return 1;
-
                     }
                     case "REGISTERED": {
                         JSONObject array = new JSONObject(json.get("Representante").toString());
@@ -127,6 +127,7 @@ public class Frm_Login extends Activity {
                         representante.setTelefono1(array.getString("Telefono1"));
                         representante.setTelefono2(array.getString("Telefono2"));
                         representante.setDireccion(array.get("Direccion").toString());
+                        representante.setImagen(array.get("Imagen").toString());
                         publishProgress(2);
                         return 1;
                     }

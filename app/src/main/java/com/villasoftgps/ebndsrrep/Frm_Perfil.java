@@ -11,15 +11,22 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,6 +36,8 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import clases.Representante;
@@ -41,6 +50,7 @@ public class Frm_Perfil extends Activity {
     static SharedPreferences sPrefs;
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
+    Representante representante;
     private ListView lvPerfil;
     private ArrayList<lvPerfilItems> data;
     private CircleImageView profile_image;
@@ -50,7 +60,16 @@ public class Frm_Perfil extends Activity {
     private static final int FROM_CAMERA = 100;
     private static final int FROM_GALLERY = 200;
     private static final int FROM_CROPPING = 300;
-    private Uri picUri;
+    private Intent intCamera;
+    private Intent intGallery;
+    private Uri uri;
+    private File file;
+    String imageString;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +78,7 @@ public class Frm_Perfil extends Activity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         lvPerfil = (ListView) findViewById(R.id.lvPerfil);
-        View header = getLayoutInflater().inflate(R.layout.lvperfilheader,null);
+        View header = getLayoutInflater().inflate(R.layout.lvperfilheader, null);
         profile_image = (CircleImageView) header.findViewById(R.id.profile_image);
         profile_image.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,57 +89,33 @@ public class Frm_Perfil extends Activity {
                 builder.setItems(opciones, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int seleccion) {
-                        try{
-                            switch (seleccion){
+                        try {
+                            switch (seleccion) {
                                 case 0:
-                                    Intent intentCaptured = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                                    intCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                                    file = new File(Environment.getExternalStorageDirectory(),
+                                            "file" + String.valueOf(System.currentTimeMillis() + ".jpg"));
+                                    uri = Uri.fromFile(file);
+                                    intCamera.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                                    intCamera.putExtra("return-data", true);
+                                    startActivityForResult(intCamera, FROM_CAMERA);
 
-                                    intentCaptured.putExtra(MediaStore.EXTRA_OUTPUT,
-                                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString());
-                                    // ******** code for crop image
-                                    intentCaptured.putExtra("crop", "true");
-                                    intentCaptured.putExtra("aspectX", 0);
-                                    intentCaptured.putExtra("aspectY", 0);
-                                    intentCaptured.putExtra("outputX", 200);
-                                    intentCaptured.putExtra("outputY", 150);
-
-                                    try {
-                                        intentCaptured.putExtra("return-data", true);
-                                        startActivityForResult(intentCaptured, FROM_CAMERA);
-                                    } catch (ActivityNotFoundException e) {
-                                        // Do nothing for now
-                                    }
-
-                                break;
+                                    break;
                                 case 1:
-                                    Intent intent = new Intent();
-                                    // call android default gallery
-                                    intent.setType("image/*");
-                                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                                    // ******** code for crop image
-                                    intent.putExtra("crop", "true");
-                                    intent.putExtra("aspectX", 0);
-                                    intent.putExtra("aspectY", 0);
-                                    intent.putExtra("outputX", 200);
-                                    intent.putExtra("outputY", 150);
+                                    intGallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                                    intGallery.setType("image/*");
 
-                                    try {
-
-                                        intent.putExtra("return-data", true);
-                                        startActivityForResult(Intent.createChooser(intent,
-                                                "Seleccione el origen"), FROM_GALLERY);
-
-                                    } catch (ActivityNotFoundException e) {
-                                    // Do nothing for now
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                        startActivityForResult(Intent.createChooser(intGallery, "Seleccione una opcion"), FROM_GALLERY);
+                                    } else {
+                                        startActivityForResult(intGallery, FROM_GALLERY);
                                     }
-
-                                break;
+                                    break;
                                 default:
                                     dialog.dismiss();
                                     break;
                             }
-                        }
-                        catch (ActivityNotFoundException anfe) {
+                        } catch (ActivityNotFoundException anfe) {
                             Toast toast = Toast.makeText(Frm_Perfil.this, "Este dispositivo no soporta esta acción", Toast.LENGTH_SHORT);
                             toast.show();
                         }
@@ -130,15 +125,18 @@ public class Frm_Perfil extends Activity {
             }
         });
 
-        lvPerfil.addHeaderView(header);
-        data = new ArrayList<>();
-
-        if (sPrefs == null){
-            sPrefs = getSharedPreferences(PREF_NAME,MODE_PRIVATE);
+        if (sPrefs == null) {
+            sPrefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         }
 
         Gson gson = new Gson();
-        Representante representante = gson.fromJson(sPrefs.getString(PROPERTY_USER,""),Representante.class);
+        representante = gson.fromJson(sPrefs.getString(PROPERTY_USER, ""), Representante.class);
+
+        byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);
+        profile_image.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+
+        lvPerfil.addHeaderView(header);
+        data = new ArrayList<>();
 
         data.add(new lvPerfilItems(
                 "Datos Personales",
@@ -158,7 +156,7 @@ public class Frm_Perfil extends Activity {
 
         String telefono2 = "";
 
-        if (!representante.getTelefono2().equals("")){
+        if (!representante.getTelefono2().equals("")) {
             telefono2 += " / " + representante.getTelefono2();
         }
 
@@ -171,13 +169,16 @@ public class Frm_Perfil extends Activity {
         ));
 
         new AsyncRepresentados().execute(representante.getId());
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    private class AsyncRepresentados extends AsyncTask<Object,Integer,Integer>{
+    private class AsyncRepresentados extends AsyncTask<Object, Integer, Integer> {
 
         @Override
         protected Integer doInBackground(Object... params) {
-            ArrayList<Object>  parametros = new ArrayList<>(2);
+            ArrayList<Object> parametros = new ArrayList<>(2);
             parametros.add(0, "idRepresentante*" + params[0]);
             parametros.add(1, "getRepresentados");
 
@@ -197,7 +198,7 @@ public class Frm_Perfil extends Activity {
                 switch (result) {
                     case "OK":
 
-                        if (!representados.equals("")){
+                        if (!representados.equals("")) {
                             JSONArray array = jsonObj.getJSONArray("Representados");
 
                             for (int i = 0; i < array.length(); i++) {
@@ -205,7 +206,7 @@ public class Frm_Perfil extends Activity {
 
                                 String car;
 
-                                switch (representado.getInt("Grado")){
+                                switch (representado.getInt("Grado")) {
                                     case 1:
                                         car = "ro";
                                         break;
@@ -236,7 +237,7 @@ public class Frm_Perfil extends Activity {
                             }
                         }
 
-                        if (!institucion.equals("")){
+                        if (!institucion.equals("")) {
                             JSONObject _institucion = new JSONObject(jsonObj.get("Institucion").toString());
 
                             data.add(new lvPerfilItems(
@@ -257,7 +258,7 @@ public class Frm_Perfil extends Activity {
 
                             String telefono2 = "";
 
-                            if (!_institucion.getString("Telefono2").equals("")){
+                            if (!_institucion.getString("Telefono2").equals("")) {
                                 telefono2 += " / " + _institucion.getString("Telefono2");
                             }
 
@@ -322,7 +323,7 @@ public class Frm_Perfil extends Activity {
     }
 
     private static class respuesta {
-        Object getData(ArrayList<Object> parametros){
+        Object getData(ArrayList<Object> parametros) {
             Object data;
             String namespace = "http://schooltool.org/";
             String direccion = "http://154.42.65.212:9600/schooltool.asmx";
@@ -333,7 +334,7 @@ public class Frm_Perfil extends Activity {
             String property[];
             PropertyInfo pi;
 
-            for (int i = 0; i < parametros.size() - 1; i++){
+            for (int i = 0; i < parametros.size() - 1; i++) {
                 property = parametros.get(i).toString().split("\\*");
                 pi = new PropertyInfo();
                 pi.setName(property[0]);
@@ -362,24 +363,106 @@ public class Frm_Perfil extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (data != null){
-            if (requestCode == FROM_CAMERA) {
-                Bundle extras = data.getExtras();
-                if (extras != null) {
-                    Bitmap photo = extras.getParcelable("data");
-                    profile_image.setImageBitmap(photo);
+        if (requestCode == FROM_CAMERA && resultCode == RESULT_OK) {
+            cropImage();
+        } else if (requestCode == FROM_GALLERY) {
+            if (data != null) {
+                uri = data.getData();
+                cropImage();
+            }
+        } else if (requestCode == FROM_CROPPING) {
+            if (data != null) {
+                Bundle bundle = data.getExtras();
+                Bitmap bitmap = bundle.getParcelable("data");
+                sendImageToServer(bitmap);
+            }
+        }
+    }
+
+    private void cropImage() {
+        try {
+            Intent intCrop = new Intent("com.android.camera.action.CROP");
+            intCrop.setDataAndType(uri, "image/*");
+
+            intCrop.putExtra("crop", "true");
+            intCrop.putExtra("outputX", 400);
+            intCrop.putExtra("outputY", 400);
+            intCrop.putExtra("aspectX", 1);
+            intCrop.putExtra("aspectY", 1);
+            intCrop.putExtra("scaleUpIfNeeded", true);
+            intCrop.putExtra("return-data", true);
+
+            startActivityForResult(intCrop, FROM_CROPPING);
+        } catch (ActivityNotFoundException ex) {
+
+        }
+    }
+
+    private void sendImageToServer(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream); //compress to which format you want.
+        byte[] byte_arr = stream.toByteArray();
+        imageString = Base64.encodeToString(byte_arr, Base64.DEFAULT);
+        representante.setImagen(imageString);
+
+        new AsyncSendImage().execute(representante.getId(), 0, imageString);
+    }
+
+    private class AsyncSendImage extends AsyncTask<Object, Integer, Integer> {
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object> parametros = new ArrayList<>(4);
+            parametros.add(0, "IdRepresentante*" + params[0]);
+            parametros.add(1, "IdDocente*" + params[1]);
+            parametros.add(2, "imageString*" + params[2]);
+            parametros.add(3, "saveImagenPerfil");
+
+            respuesta ws = new respuesta();
+            Object response = ws.getData(parametros);
+
+            try {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                if (result.equals("OK")) {
+                    return 1;
+
+                } else {
+                    return 2;
 
                 }
+            } catch (JSONException e) {
+                return 3;
             }
+        }
 
-            if (requestCode == FROM_GALLERY) {
-                Bundle extras2 = data.getExtras();
-                if (extras2 != null) {
-                    Bitmap photo = extras2.getParcelable("data");
-                    profile_image.setImageBitmap(photo);
+        @Override
+        protected void onPostExecute(Integer value) {
+            super.onPostExecute(value);
 
+            String texto = "";
+
+            if (value == 1){
+                byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);
+                profile_image.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+
+                if (sPrefs == null){
+                    sPrefs = getSharedPreferences(PREF_NAME,MODE_PRIVATE);
                 }
+
+                Gson gson = new Gson();
+                SharedPreferences.Editor sEditor = sPrefs.edit();
+                sEditor.putString(PROPERTY_USER,gson.toJson(representante));
+                sEditor.apply();
+
+                texto = "imagen de perfil actualizada correctamete";
             }
+            else{
+                texto = "ocurrió un error al actualizar la imagen de perfil";
+            }
+
+            Toast.makeText(Frm_Perfil.this, texto, Toast.LENGTH_SHORT).show();
         }
     }
 }

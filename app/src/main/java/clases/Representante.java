@@ -2,6 +2,7 @@ package clases;
 
 import java.io.Serializable;
 
+@SuppressWarnings("ALL")
 public class Representante implements Serializable {
     private int id;
     private String nombres;
@@ -10,6 +11,7 @@ public class Representante implements Serializable {
     private int cedula;
     private String telefono2;
     private String direccion;
+    private String imagen;
 
     public int getId() {
         return id;
@@ -65,5 +67,13 @@ public class Representante implements Serializable {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
     }
 }
