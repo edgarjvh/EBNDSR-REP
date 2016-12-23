@@ -15,18 +15,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +29,6 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -54,9 +46,6 @@ public class Frm_Perfil extends Activity {
     private ListView lvPerfil;
     private ArrayList<lvPerfilItems> data;
     private CircleImageView profile_image;
-    private static String APP_DIRECTORY = "myAppProfiles/";
-    private static String MEDIA_DIRECTORY = "media";
-    private static String PICTURE_NAME = "temporal.jpg";
     private static final int FROM_CAMERA = 100;
     private static final int FROM_GALLERY = 200;
     private static final int FROM_CROPPING = 300;
@@ -65,11 +54,6 @@ public class Frm_Perfil extends Activity {
     private Uri uri;
     private File file;
     String imageString;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,9 +153,6 @@ public class Frm_Perfil extends Activity {
         ));
 
         new AsyncRepresentados().execute(representante.getId());
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     private class AsyncRepresentados extends AsyncTask<Object, Integer, Integer> {
@@ -394,7 +375,7 @@ public class Frm_Perfil extends Activity {
 
             startActivityForResult(intCrop, FROM_CROPPING);
         } catch (ActivityNotFoundException ex) {
-
+            Log.d("EJVH Catch", ex.getMessage());
         }
     }
 
@@ -441,7 +422,7 @@ public class Frm_Perfil extends Activity {
         protected void onPostExecute(Integer value) {
             super.onPostExecute(value);
 
-            String texto = "";
+            String texto;
 
             if (value == 1){
                 byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);

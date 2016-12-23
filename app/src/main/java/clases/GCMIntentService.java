@@ -7,22 +7,16 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.view.View;
 import android.widget.RemoteViews;
-import android.widget.TextView;
-
-import com.google.android.gms.fitness.data.Goal;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.villasoftgps.ebndsrrep.Frm_Principal;
 import com.villasoftgps.ebndsrrep.R;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.ksoap2.SoapEnvelope;
@@ -35,10 +29,7 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
-
 import vistas.lvMensajesItems;
-import vistas.lvMensajesItemsArrayAdapter;
-
 import static com.google.android.gms.gcm.GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE;
 
 public class GCMIntentService extends IntentService
@@ -49,11 +40,15 @@ public class GCMIntentService extends IntentService
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
     private static final String PROPERTY_CONVERSATIONS = "conversations";
+    private static final String PROPERTY_CURRENT_ID_DOC = "currentIdDocente";
+    private static final String PROPERTY_CURRENT_TAB = "currentTab";
+    private static final String PROPERTY_IS_FOREGROUND = "isForeground";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_EXPIRATION_TIME = "onServerExpirationTimeMs";
     private static final int EXPIRATION_TIME_MS = 1000*3600*24*7;
     private Representante representante;
+    private int idDocente = 0;
     private lvMensajesItems mensaje;
     private ArrayList<lvMensajesItems> conversaciones;
     private Gson gson;
@@ -117,6 +112,8 @@ public class GCMIntentService extends IntentService
                                         array.getString("Texto")
                                 );
 
+                                idDocente = array.getInt("IdDocente");
+
                                 if (sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
                                     conversaciones.add(mensaje);
                                     SharedPreferences.Editor sEditor = sPrefs.edit();
@@ -137,12 +134,13 @@ public class GCMIntentService extends IntentService
                                     representante = gson.fromJson(sPrefs.getString(PROPERTY_USER,""),Representante.class);
 
                                     if (representante.getId() == array.getInt("IdRepresentante")){
+
                                         confirmarRecepcion(array.getInt("IdMensaje"),1);
 
                                         SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss aaa",new Locale("es","ES"));
                                         Date fecha = new Date(Long.parseLong(value));
 
-                                        mostrarNotification(array.getString("Texto"),df.format(fecha),array.getString("NombreDocente"));
+                                        mostrarNotification(array.getString("Texto"),df.format(fecha),array.getString("NombreDocente"), idDocente);
                                     }
                                 }
                             }
@@ -214,6 +212,7 @@ public class GCMIntentService extends IntentService
         GCMBroadcastReceiver.completeWakefulIntent(intent);
     }
 
+
     private void confirmarRecepcion (int idMensaje, int estado){
         ArrayList<Object>  parametros = new ArrayList<>(3);
         parametros.add(0, "idMensaje*" + idMensaje);
@@ -251,7 +250,7 @@ public class GCMIntentService extends IntentService
 
     }
 
-    private void mostrarNotification(String mensaje, String fecha, String nombreDocente)
+    private void mostrarNotification(String mensaje, String fecha, String nombreDocente, int idDocente)
     {
         if(sPrefs == null){
             sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -266,25 +265,41 @@ public class GCMIntentService extends IntentService
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 noti.priority= Notification.PRIORITY_MAX;
             }
-        mNotificationManager.notify(0, noti);
+
+        boolean isForeground = sPrefs.getBoolean(PROPERTY_IS_FOREGROUND,false);
+        int currentTab = sPrefs.getInt(PROPERTY_CURRENT_TAB,0);
+        int curIdDocente = sPrefs.getInt(PROPERTY_CURRENT_ID_DOC,0);
+
+        if (isForeground){
+            if (currentTab == 0){
+                mNotificationManager.notify(0, noti);
+            }else{
+                if (curIdDocente != idDocente){
+                    mNotificationManager.notify(0, noti);
+                }
+            }
+        }else{
+            mNotificationManager.notify(0, noti);
+        }
     }
 
     private Notification setCustomViewNotification(String fecha, String mensaje, String nombreDocente) {
         Intent targetIntent = new Intent(getApplicationContext(),Frm_Principal.class);
 
+        targetIntent.putExtra("incoming",idDocente);
         //putextras para que al seleccionar la notificacion nos dirija a la conversacion
 
         PendingIntent pIntent = PendingIntent.getActivity(getBaseContext(), 0, targetIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         // Create remote view and set bigContentView.
         RemoteViews expandedView = new RemoteViews("com.villasoftgps.ebndsrrep", R.layout.custom_notification);
-        expandedView.setImageViewResource(R.id.imgNotIcon, R.drawable.representante_icon);
+        expandedView.setImageViewResource(R.id.imgNotIcon, R.drawable.parent_large);
         expandedView.setTextViewText(R.id.lblNombreDocente,nombreDocente);
         expandedView.setTextViewText(R.id.lblFecha, fecha);
         expandedView.setTextViewText(R.id.lblMensaje, mensaje);
 
         Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.representante_icon)
+                .setSmallIcon(R.drawable.parent)
                 .setAutoCancel(true)
                 .setContentIntent(pIntent)
                 .setContentTitle("Módulo Representantes")
@@ -292,7 +307,6 @@ public class GCMIntentService extends IntentService
                 .build();
 
          notification.bigContentView = expandedView;
-
 
         return notification;
     }

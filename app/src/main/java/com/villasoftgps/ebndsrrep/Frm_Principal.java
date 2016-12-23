@@ -1,6 +1,7 @@
 package com.villasoftgps.ebndsrrep;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +18,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -29,6 +31,8 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TextView;
+
+import com.google.android.gms.vision.text.Text;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -70,35 +74,64 @@ public class Frm_Principal extends Activity {
     private static final String PROPERTY_USER = "user";
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_CONVERSATIONS = "conversations";
+    private static final String PROPERTY_IS_FOREGROUND = "isForeground";
+    private static final String PROPERTY_CURRENT_ID_DOC = "currentIdDocente";
+    private static final String PROPERTY_CURRENT_TAB = "currentTab";
 
-    Object response = null;
-    String mensaje = "";
-    lvCalendarioItems CalendarioItems[];
-    static ArrayList<lvMensajesItems> MensajesItems;
-    static ArrayList<SpinnerItems> spinnerItems;
-    ArrayList<lvMenuItems> MenuItems;
+    private Object response = null;
+    private String mensaje = "";
+    private lvCalendarioItems CalendarioItems[];
+    private static ArrayList<lvMensajesItems> MensajesItems;
+    private static ArrayList<SpinnerItems> spinnerItems;
+    private ArrayList<lvMenuItems> MenuItems;
     private static Representante representante;
     private ListView lvCalendario;
     private ListView lvMenu;
     private static ListView lvMensajes;
     private CustomProgress dialogMessage;
-    DrawerLayout drawerLayout;
-    AutoResizeTextView lblSinEventos;
-    AutoResizeTextView lblCargandoEventos;
-    int value = 0;
-    View sinEventos;
-    View cargandoEventos;
-    static lvMensajesItemsArrayAdapter adapter;
-    static SpinnerItemsArrayAdapter spinnerAdapter;
-    lvMenuArrayAdapter menuAdapter;
-    static Spinner cboDocentes;
-    static Frm_Principal principal;
-    static Gson gson;
+    private DrawerLayout drawerLayout;
+    private AutoResizeTextView lblSinEventos;
+    private AutoResizeTextView lblCargandoEventos;
+    private int value = 0;
+    private View sinEventos;
+    private View cargandoEventos;
+    private static lvMensajesItemsArrayAdapter adapter;
+    private static SpinnerItemsArrayAdapter spinnerAdapter;
+    private lvMenuArrayAdapter menuAdapter;
+    private static Spinner cboDocentes;
+    private static Frm_Principal principal;
+    private static Gson gson;
+    private TabHost tabs;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (sPrefs == null){
+            sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME,MODE_PRIVATE);
+        }
+
+        SharedPreferences.Editor sEditor = sPrefs.edit();
+        sEditor.putBoolean(PROPERTY_IS_FOREGROUND,false);
+        sEditor.apply();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (sPrefs == null){
+            sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME,MODE_PRIVATE);
+        }
+
+        SharedPreferences.Editor sEditor = sPrefs.edit();
+        sEditor.putBoolean(PROPERTY_IS_FOREGROUND,true);
+        sEditor.apply();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.d("EJVH Entrando en:", "OnCreate");
         principal = Frm_Principal.this;
 
         if (sPrefs == null){
@@ -132,6 +165,10 @@ public class Frm_Principal extends Activity {
                         if (view != null){
                             TextView lblIdDocente = (TextView) view.findViewById(R.id.lblIdDocente);
                             int idDocente = Integer.parseInt(lblIdDocente.getText().toString());
+
+                            SharedPreferences.Editor sEditor = sPrefs.edit();
+                            sEditor.putInt(PROPERTY_CURRENT_ID_DOC,idDocente);
+                            sEditor.apply();
 
                             if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
                                 Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
@@ -178,6 +215,15 @@ public class Frm_Principal extends Activity {
 
         adapter = new lvMensajesItemsArrayAdapter(Frm_Principal.this,MensajesItems);
         lvMensajes.setAdapter(adapter);
+
+        lvMensajes.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                enviarConfirmacion();
+
+                return false;
+            }
+        });
 
         View lvMenuHeader = getLayoutInflater().inflate(R.layout.lvmenuheader,null);
         menuAdapter = new lvMenuArrayAdapter(this,MenuItems);
@@ -249,6 +295,14 @@ public class Frm_Principal extends Activity {
             }
         });
 
+        txtMensaje.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                enviarConfirmacion();
+                return false;
+            }
+        });
+
         btnEnviarMensaje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -287,6 +341,7 @@ public class Frm_Principal extends Activity {
 
                             SharedPreferences.Editor sEditor = sPrefs.edit();
                             sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
+                            sEditor.putInt(PROPERTY_CURRENT_ID_DOC,idDocente);
                             sEditor.apply();
 
                             actualizarConversaciones();
@@ -393,7 +448,7 @@ public class Frm_Principal extends Activity {
 
         Resources res = getResources();
 
-        TabHost tabs=(TabHost)findViewById(R.id.tabhost);
+        tabs=(TabHost)findViewById(R.id.tabhost);
         tabs.setup();
 
         TabHost.TabSpec spec=tabs.newTabSpec("calendario");
@@ -410,6 +465,19 @@ public class Frm_Principal extends Activity {
         tabs.addTab(spec);
 
         tabs.setCurrentTab(0);
+
+        SharedPreferences.Editor sEditor = sPrefs.edit();
+        sEditor.putInt(PROPERTY_CURRENT_TAB,0);
+        sEditor.apply();
+
+        tabs.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            @Override
+            public void onTabChanged(String tabId) {
+                SharedPreferences.Editor sEditor = sPrefs.edit();
+                sEditor.putInt(PROPERTY_CURRENT_TAB,tabId.equals("calendario") ? 0 : 1);
+                sEditor.apply();
+            }
+        });
 
         sinEventos = findViewById(R.id.emptyView);
         cargandoEventos = findViewById(R.id.loadingView);
@@ -446,6 +514,33 @@ public class Frm_Principal extends Activity {
         new AsyncCargarDocentes().execute(representante.getId());
         new RegistrarGCM(Frm_Principal.this,representante);
     }
+
+    private void enviarConfirmacion() {
+        try{
+            if (MensajesItems.size() > 0){
+                for (int i = 0; i < MensajesItems.size(); i++){
+                    int idDocente = 0;
+                    View docente = cboDocentes.getSelectedView();
+
+                    if (docente != null){
+                        TextView lblidDocente = (TextView)docente.findViewById(R.id.lblIdDocente);
+                        idDocente = Integer.parseInt(lblidDocente.getText().toString());
+                    }
+
+                    if ((MensajesItems.get(i).getVia() == 0  && MensajesItems.get(i).getIdDocente() == idDocente)
+                            &  MensajesItems.get(i).getStatus() < 2){
+                        MensajesItems.get(i).setStatus(2);
+                        new AsyncConfirmarMensaje().execute(MensajesItems.get(i).getIdMensaje(), 2);
+                    }
+                }
+            }
+        }catch (ActivityNotFoundException ex){
+
+        }
+    }
+
+
+
 
     public static void actualizarConversaciones() {
         principal.runOnUiThread(new Runnable() {
@@ -713,7 +808,26 @@ public class Frm_Principal extends Activity {
             if (values[0] == 1){
                 spinnerAdapter = new SpinnerItemsArrayAdapter(Frm_Principal.this,spinnerItems);
                 cboDocentes.setAdapter(spinnerAdapter);
-                cboDocentes.setSelection(0);
+
+                int sel = 0;
+
+                if (spinnerItems.size() > 0){
+                    Bundle extras = getIntent().getExtras();
+
+                    if(extras != null){
+                        int idDocente = extras.getInt("incoming");
+
+                        for (int i = 0; i < spinnerItems.size(); i++){
+                            if (spinnerItems.get(i).getIdDocente() == idDocente){
+                                sel = i;
+                                tabs.setCurrentTab(1);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                cboDocentes.setSelection(sel);
 
                 cboDocentes.post(new Runnable() {
                     @Override
@@ -870,6 +984,48 @@ public class Frm_Principal extends Activity {
         @Override
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
+        }
+    }
+
+    private class AsyncConfirmarMensaje extends AsyncTask<Object, Integer, Integer>{
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+            ArrayList<Object>  parametros = new ArrayList<>(3);
+            parametros.add(0, "idMensaje*" + params[0]);
+            parametros.add(1, "estado*" + params[1]);
+            parametros.add(2, "confirmarMensaje");
+
+            respuesta ws = new respuesta();
+            Object response = ws.getData(parametros);
+
+            try
+            {
+                JSONObject jsonObj = new JSONObject(response.toString());
+                String result = jsonObj.get("Result").toString();
+
+                switch (result) {
+                    case "CONFIRMADO":
+                        /*
+                                Result = "CONFIRMADO",
+                                Via = via,
+                                IdDocente = idDocente,
+                                IdRepresentante = idRepresentante,
+                                IdMensaje = idMensaje,
+                                Estado = estado
+                        */
+
+                        Log.d("EJVH CONFIRMACION", response.toString());
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (JSONException e) {
+
+            }
+
+            return null;
         }
     }
 

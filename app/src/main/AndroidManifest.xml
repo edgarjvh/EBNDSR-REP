@@ -19,9 +19,12 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
 
     <application
         android:allowBackup="true"
@@ -52,8 +55,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".Frm_Principal" />
-        <activity android:name=".Frm_Perfil"/>
-        <activity android:name="com.soundcloud.android.crop.CropImageActivity"/>
+        <activity android:name=".Frm_Perfil" />
+        <activity android:name="com.soundcloud.android.crop.CropImageActivity" />
+
         <receiver
             android:name="clases.GCMBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND">
@@ -64,11 +68,16 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="clases.GCMIntentService" /><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <service android:name="clases.GCMIntentService" />
+        <!--
+ ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
+        -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <activity android:name=".Frm_CambiarClave"></activity>
     </application>
 
 </manifest>
