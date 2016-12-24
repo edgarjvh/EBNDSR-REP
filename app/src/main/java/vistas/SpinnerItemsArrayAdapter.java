@@ -1,7 +1,9 @@
 package vistas;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +41,7 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
 
     @Override
     public View getView(int pos, View convertView, ViewGroup parent) {
-        SpinnerItems docente = (SpinnerItems)getItem(pos);
+        SpinnerItems alumno = (SpinnerItems)getItem(pos);
 
         if (convertView == null){
             LayoutInflater inflater = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -47,23 +49,29 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
         }
 
         ImageView imgPerfil = (ImageView)convertView.findViewById(R.id.imgPerfil);
-        TextView lblId = (TextView)convertView.findViewById(R.id.lblIdDocente);
+        TextView lblIdDocente = (TextView)convertView.findViewById(R.id.lblIdDocente);
+        TextView lblIdAlumno = (TextView)convertView.findViewById(R.id.lblIdAlumno);
         TextView lblRegistrado = (TextView)convertView.findViewById(R.id.lblRegistrado);
-        TextView lblApellidos = (TextView)convertView.findViewById(R.id.lblApellidos);
-        TextView lblNombres = (TextView)convertView.findViewById(R.id.lblNombres);
+        TextView lblDocente = (TextView)convertView.findViewById(R.id.lblDocente);
+        TextView lblAlumno = (TextView)convertView.findViewById(R.id.lblAlumno);
 
-        imgPerfil.setImageResource(R.drawable.teacher_icon);
-        lblId.setText(String.format(new Locale("es","ES"),"%1$d",docente.getIdDocente()));
-        lblRegistrado.setText(String.format(new Locale("es","ES"),"%1$d",docente.getRegistrado()));
-        lblApellidos.setText(docente.getApellidos());
-        lblNombres.setText(docente.getNombres());
-
-        if(docente.getRegistrado() == 0){
-            lblApellidos.setTextColor(Color.parseColor("#8b0101"));
-            lblNombres.setTextColor(Color.parseColor("#8b0101"));
+        if (alumno.getImagen().equals("")){
+            imgPerfil.setImageResource(R.drawable.teacher_icon);
         }else{
-            lblApellidos.setTextColor(Color.parseColor("#d6c400"));
-            lblNombres.setTextColor(Color.parseColor("#d6c400"));
+            byte[] decodedBytes = Base64.decode(alumno.getImagen(),0);
+            imgPerfil.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+        }
+
+        lblIdDocente.setText(String.format(new Locale("es","ES"),"%1$d",alumno.getIdDocente()));
+        lblIdAlumno.setText(String.format(new Locale("es","ES"),"%1$d",alumno.getIdAlumno()));
+        lblRegistrado.setText(String.format(new Locale("es","ES"),"%1$d",alumno.getRegistrado()));
+        lblDocente.setText(alumno.getApellidosDoc() + ", " + alumno.getNombresDoc());
+        lblAlumno.setText(alumno.getApellidosAl() + ", " + alumno.getNombresAl());
+
+        if(alumno.getRegistrado() == 0){
+            lblDocente.setTextColor(Color.parseColor("#8b0101"));
+        }else{
+            lblDocente.setTextColor(Color.parseColor("#d6c400"));
         }
         return convertView;
     }

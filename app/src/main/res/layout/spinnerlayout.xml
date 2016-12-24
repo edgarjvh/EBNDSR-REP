@@ -29,25 +29,35 @@
             android:layout_marginStart="5dp"
             android:layout_centerInParent="true">
 
-            <TextView
+            <controles.AutoResizeTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/lblApellidos"
+                android:id="@+id/lblDocente"
                 android:maxLines="1"
                 android:textColor="#d6c400"
-                android:textSize="12sp"
-                android:textStyle="italic|bold"/>
+                android:textSize="14sp"
+                android:textStyle="italic|bold"
+                android:gravity="center_horizontal|center_vertical"
+                android:textAlignment="gravity"/>
 
-            <TextView
+            <controles.AutoResizeTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/lblNombres"
+                android:id="@+id/lblAlumno"
                 android:maxLines="1"
-                android:textColor="#d6c400"
+                android:textColor="#0019d6"
                 android:textSize="12sp"
                 android:textStyle="italic|bold"
-                android:layout_below="@+id/lblApellidos"/>
+                android:layout_below="@+id/lblDocente"
+                android:gravity="center_horizontal|center_vertical"
+                android:textAlignment="gravity"/>
         </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/lblIdAlumno"
+            android:visibility="gone"/>
 
         <TextView
             android:layout_width="wrap_content"

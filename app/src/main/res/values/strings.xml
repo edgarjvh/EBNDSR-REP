@@ -26,4 +26,10 @@
     <string name="nombres">NOMBRES</string>
     <string name="se_cerrar_n_las_dem_s_sesiones_que_haya_iniciado_en_otros_dispositivos_desea_continuar">Se cerrarán las demás sesiones que haya iniciado en otros dispositivos. ¿Desea continuar?</string>
     <string name="m_dulo_representantes">Módulo Representantes</string>
+    <string name="cambiar_contrase_a">Cambiar Contraseña</string>
+    <string name="ingrese_su_clave_actual">Ingrese su contraseña actual</string>
+    <string name="ingrese_su_nueva_contrase_a">Ingrese su nueva contraseña</string>
+    <string name="confirme_su_nueva_contrase_a">Confirme su nueva contraseña</string>
+    <string name="cambiar_clave">CAMBIAR CONTRASEÑA</string>
+    <string name="alumno">ALUMNO</string>
 </resources>

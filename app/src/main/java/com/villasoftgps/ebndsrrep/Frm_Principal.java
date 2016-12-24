@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.widget.DrawerLayout;
 import android.text.Editable;
-import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -28,14 +27,10 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TextView;
-
-import com.google.android.gms.vision.text.Text;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,14 +39,11 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
-
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-
 import clases.RegistrarGCM;
 import clases.Representante;
 import controles.AutoResizeTextView;
@@ -66,10 +58,11 @@ import vistas.lvMensajesItemsArrayAdapter;
 import vistas.lvMenuArrayAdapter;
 import vistas.lvMenuItems;
 
+@SuppressWarnings({"deprecation", "unused"})
 public class Frm_Principal extends Activity {
 
     static SharedPreferences sPrefs;
-    SharedPreferences.Editor sEditor;
+    //SharedPreferences.Editor sEditor;
     private static final String PREF_NAME = "prefSchoolTool";
     private static final String PROPERTY_USER = "user";
     private static final String PROPERTY_REG_ID = "registration_id";
@@ -77,13 +70,11 @@ public class Frm_Principal extends Activity {
     private static final String PROPERTY_IS_FOREGROUND = "isForeground";
     private static final String PROPERTY_CURRENT_ID_DOC = "currentIdDocente";
     private static final String PROPERTY_CURRENT_TAB = "currentTab";
-
     private Object response = null;
     private String mensaje = "";
     private lvCalendarioItems CalendarioItems[];
     private static ArrayList<lvMensajesItems> MensajesItems;
     private static ArrayList<SpinnerItems> spinnerItems;
-    private ArrayList<lvMenuItems> MenuItems;
     private static Representante representante;
     private ListView lvCalendario;
     private ListView lvMenu;
@@ -97,7 +88,6 @@ public class Frm_Principal extends Activity {
     private View cargandoEventos;
     private static lvMensajesItemsArrayAdapter adapter;
     private static SpinnerItemsArrayAdapter spinnerAdapter;
-    private lvMenuArrayAdapter menuAdapter;
     private static Spinner cboDocentes;
     private static Frm_Principal principal;
     private static Gson gson;
@@ -131,7 +121,6 @@ public class Frm_Principal extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.d("EJVH Entrando en:", "OnCreate");
         principal = Frm_Principal.this;
 
         if (sPrefs == null){
@@ -203,11 +192,11 @@ public class Frm_Principal extends Activity {
 
         MensajesItems = new ArrayList<>();
 
-        MenuItems = new ArrayList<>();
+        ArrayList<lvMenuItems> menuItems = new ArrayList<>();
 
-        MenuItems.add(new lvMenuItems(R.drawable.profile_icon,"Ver Perfil"));
-        MenuItems.add(new lvMenuItems(R.drawable.change_pass_icon,"Cambiar Contraseña"));
-        MenuItems.add(new lvMenuItems(R.drawable.logout_icon,"Cerrar Sesión"));
+        menuItems.add(new lvMenuItems(R.drawable.profile_icon,"Ver Perfil"));
+        menuItems.add(new lvMenuItems(R.drawable.change_pass_icon,"Cambiar Contraseña"));
+        menuItems.add(new lvMenuItems(R.drawable.logout_icon,"Cerrar Sesión"));
 
         lvCalendario = (ListView)findViewById(R.id.lvCalendario);
         lvMensajes = (ListView)findViewById(R.id.lvMensajes);
@@ -226,7 +215,7 @@ public class Frm_Principal extends Activity {
         });
 
         View lvMenuHeader = getLayoutInflater().inflate(R.layout.lvmenuheader,null);
-        menuAdapter = new lvMenuArrayAdapter(this,MenuItems);
+        lvMenuArrayAdapter menuAdapter = new lvMenuArrayAdapter(this, menuItems);
         lvMenu.addHeaderView(lvMenuHeader);
         lvMenu.setAdapter(menuAdapter);
 
@@ -235,14 +224,18 @@ public class Frm_Principal extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position){
                     case 1: // ver mi perfil
-                        Intent frm = new Intent(Frm_Principal.this,Frm_Perfil.class);
-                        startActivity(frm);
+                        Intent frmPerfil = new Intent(Frm_Principal.this,Frm_Perfil.class);
+                        startActivity(frmPerfil);
                         if (drawerLayout.isDrawerOpen(lvMenu)){
                             drawerLayout.closeDrawers();
                         }
                         break;
                     case 2: // cambiar contraseña
-
+                        Intent frmclave = new Intent(Frm_Principal.this,Frm_CambiarClave.class);
+                        startActivity(frmclave);
+                        if (drawerLayout.isDrawerOpen(lvMenu)){
+                            drawerLayout.closeDrawers();
+                        }
                         break;
                     case 3: // cerrar sesion
                         LogoutDialog cpd = new LogoutDialog(Frm_Principal.this);
@@ -511,7 +504,7 @@ public class Frm_Principal extends Activity {
 
         mensaje = "Buscando eventos para esta semana. Por favor espere...";
         new AsyncCalendario().execute(representante.getId(), 0);
-        new AsyncCargarDocentes().execute(representante.getId());
+        new AsyncCargarAlumnosDocentes().execute(representante.getId());
         new RegistrarGCM(Frm_Principal.this,representante);
     }
 
@@ -535,12 +528,9 @@ public class Frm_Principal extends Activity {
                 }
             }
         }catch (ActivityNotFoundException ex){
-
+            Log.d("EJVH CATCH", ex.getMessage());
         }
     }
-
-
-
 
     public static void actualizarConversaciones() {
         principal.runOnUiThread(new Runnable() {
@@ -749,14 +739,14 @@ public class Frm_Principal extends Activity {
         }
     }
 
-    private class AsyncCargarDocentes extends AsyncTask<Object,Integer, Integer>{
+    private class AsyncCargarAlumnosDocentes extends AsyncTask<Object,Integer, Integer>{
 
         @Override
         protected Integer doInBackground(Object... params) {
             publishProgress(0);
             ArrayList<Object>  parametros = new ArrayList<>(2);
             parametros.add(0, "idRepresentante*" + params[0]);
-            parametros.add(1, "getDocentes");
+            parametros.add(1, "getAlumnosDocentes");
 
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
@@ -767,18 +757,25 @@ public class Frm_Principal extends Activity {
 
                 String result = jsonObj.get("Result").toString();
 
+                Log.d("EJVH Alumnos Response", response.toString());
+
                 switch (result) {
                     case "OK":
-                        JSONArray array = jsonObj.getJSONArray("Docentes");
+                        JSONArray array = jsonObj.getJSONArray("Alumnos");
 
                         for (int i = 0; i < array.length(); i++) {
-                            JSONObject docente = array.getJSONObject(i);
+                            JSONObject alumno = array.getJSONObject(i);
+                            JSONObject docente = new JSONObject(alumno.getString("Docente"));
 
                             spinnerItems.add(new SpinnerItems(
                                     docente.getInt("Registrado"),
                                     docente.getInt("Id"),
                                     docente.getString("Apellidos"),
-                                    docente.getString("Nombres")
+                                    docente.getString("Nombres"),
+                                    alumno.getInt("Id"),
+                                    alumno.getString("Apellidos"),
+                                    alumno.getString("Nombres"),
+                                    docente.getString("Imagen")
                             ));
                         }
                         publishProgress(1);
@@ -1022,7 +1019,7 @@ public class Frm_Principal extends Activity {
                 }
             }
             catch (JSONException e) {
-
+                Log.d("EJVH CATCH", e.getMessage());
             }
 
             return null;

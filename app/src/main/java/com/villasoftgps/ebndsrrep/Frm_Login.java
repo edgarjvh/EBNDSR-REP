@@ -40,6 +40,7 @@ public class Frm_Login extends Activity {
     String mensaje = "";
     Representante representante;
     CustomProgress dialogMessage = null;
+    registeredDialog cpd = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,15 +159,17 @@ public class Frm_Login extends Activity {
                     mostrarMensaje(true, false, 0, mensaje);
                     break;
                 case 2:
-                    registeredDialog cpd = new registeredDialog(Frm_Login.this, representante);
+                    cpd = new registeredDialog(Frm_Login.this, representante);
                     cpd.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                     cpd.setCanceledOnTouchOutside(false);
-                    cpd.show();
 
                     if(dialogMessage != null) {
                         dialogMessage.dismiss();
                         dialogMessage = null;
                     }
+
+                    cpd.show();
+
                     break;
                 case 3:
                     mostrarMensaje(false,false,2,mensaje);
@@ -240,6 +243,12 @@ public class Frm_Login extends Activity {
                 dialogMessage = new CustomProgress(Frm_Login.this,enProgreso,icono,msj);
                 dialogMessage.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 dialogMessage.setCanceledOnTouchOutside(false);
+
+                if (cpd != null){
+                    cpd.dismiss();
+                    cpd = null;
+                }
+
                 dialogMessage.show();
 
                 CountDownTimer timer = new CountDownTimer(3000,1000) {
@@ -258,12 +267,12 @@ public class Frm_Login extends Activity {
                         sEditor.putString(PROPERTY_USER,user);
                         sEditor.apply();
 
-                        startActivity(i);
-
                         if (dialogMessage != null){
                             dialogMessage.dismiss();
                             dialogMessage = null;
                         }
+
+                        startActivity(i);
                     }
                 };
                 timer.start();
@@ -341,9 +350,24 @@ public class Frm_Login extends Activity {
 
                     new AsyncEliminarGcm().execute(representante.getId(),1);
 
-                    mensaje = getResources().getString(R.string.bienvenidoCliente) + "\n" + representante.getNombres() + " " + representante.getApellidos();
-                    mostrarMensaje(true, false, 0, mensaje);
                     dismiss();
+
+                    Intent i = new Intent(Frm_Login.this, Frm_Principal.class);
+
+                    sEditor = sPrefs.edit();
+                    Gson gson = new Gson();
+                    String user = gson.toJson(representante);
+                    sEditor.putString(PROPERTY_USER,user);
+                    sEditor.apply();
+
+                    if (dialogMessage != null){
+                        dialogMessage.dismiss();
+                        dialogMessage = null;
+                    }
+
+                    startActivity(i);
+                    //mensaje = getResources().getString(R.string.bienvenidoCliente) + "\n" + representante.getNombres() + " " + representante.getApellidos();
+                    //mostrarMensaje(true, false, 0, mensaje);
                 }
             });
 

@@ -67,7 +67,7 @@ public class Frm_Perfil extends Activity {
         profile_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final CharSequence[] opciones = {"Desde Cámara", "Desde Galería", "Cancelar"};
+                final CharSequence[] opciones = {"Desde Cámara", "Desde Galería", "Quitar Imagen", "Cancelar"};
                 final AlertDialog.Builder builder = new AlertDialog.Builder(Frm_Perfil.this);
                 builder.setTitle("Elige una opcion");
                 builder.setItems(opciones, new DialogInterface.OnClickListener() {
@@ -94,6 +94,10 @@ public class Frm_Perfil extends Activity {
                                     } else {
                                         startActivityForResult(intGallery, FROM_GALLERY);
                                     }
+                                    break;
+                                case 2:
+                                    profile_image.setImageResource(R.drawable.profile_img);
+                                    new AsyncSendImage().execute(representante.getId(), 0, "");
                                     break;
                                 default:
                                     dialog.dismiss();
@@ -406,15 +410,16 @@ public class Frm_Perfil extends Activity {
                 JSONObject jsonObj = new JSONObject(response.toString());
                 String result = jsonObj.get("Result").toString();
 
-                if (result.equals("OK")) {
-                    return 1;
-
-                } else {
-                    return 2;
-
+                switch (result) {
+                    case "INSERTED":
+                        return 1;
+                    case "DELETED":
+                        return 2;
+                    default:
+                        return 3;
                 }
             } catch (JSONException e) {
-                return 3;
+                return 4;
             }
         }
 
@@ -439,7 +444,9 @@ public class Frm_Perfil extends Activity {
 
                 texto = "imagen de perfil actualizada correctamete";
             }
-            else{
+            else if (value == 2){
+                texto = "se ha quitado la imagen de perfil correctamente";
+            }else{
                 texto = "ocurrió un error al actualizar la imagen de perfil";
             }
 

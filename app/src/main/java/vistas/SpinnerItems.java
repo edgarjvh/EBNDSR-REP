@@ -1,16 +1,25 @@
 package vistas;
 
+@SuppressWarnings("ALL")
 public class SpinnerItems {
     private int registrado;
     private int idDocente;
-    private String apellidos;
-    private String nombres;
+    private String apellidosDoc;
+    private String nombresDoc;
+    private int idAlumno;
+    private String apellidosAl;
+    private String nombresAl;
+    private String imagen;
 
-    public SpinnerItems(int registrado, int idDocente, String apellidos, String nombres){
+    public SpinnerItems(int registrado, int idDocente, String apellidosDoc, String nombresDoc, int idAlumno, String apellidosAl, String nombresAl, String imagen){
         this.registrado = registrado;
         this.idDocente = idDocente;
-        this.apellidos = apellidos;
-        this.nombres = nombres;
+        this.apellidosDoc = apellidosDoc;
+        this.nombresDoc = nombresDoc;
+        this.idAlumno = idAlumno;
+        this.apellidosAl = apellidosAl;
+        this.nombresAl = nombresAl;
+        this.imagen = imagen;
     }
 
     public int getRegistrado() {
@@ -29,19 +38,51 @@ public class SpinnerItems {
         this.idDocente = idDocente;
     }
 
-    public String getApellidos() {
-        return apellidos;
+    public String getApellidosDoc() {
+        return apellidosDoc;
     }
 
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
+    public void setApellidosDoc(String apellidosDoc) {
+        this.apellidosDoc = apellidosDoc;
     }
 
-    public String getNombres() {
-        return nombres;
+    public String getNombresDoc() {
+        return nombresDoc;
     }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
+    public void setNombresDoc(String nombresDoc) {
+        this.nombresDoc = nombresDoc;
+    }
+
+    public int getIdAlumno() {
+        return idAlumno;
+    }
+
+    public void setIdAlumno(int idAlumno) {
+        this.idAlumno = idAlumno;
+    }
+
+    public String getApellidosAl() {
+        return apellidosAl;
+    }
+
+    public void setApellidosAl(String apellidosAl) {
+        this.apellidosAl = apellidosAl;
+    }
+
+    public String getNombresAl() {
+        return nombresAl;
+    }
+
+    public void setNombresAl(String nombresAl) {
+        this.nombresAl = nombresAl;
+    }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
     }
 }
