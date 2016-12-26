@@ -313,101 +313,50 @@ public class Frm_Principal extends Activity {
                             return;
                         }
 
+                        ArrayList<lvMensajesItems> newMensaje;
+                        gson = new Gson();
+
                         if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
                             Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
-                            gson = new Gson();
-                            ArrayList<lvMensajesItems> newMensaje = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
-
-                            long fechaEnvio = System.currentTimeMillis();
-
-                            // se crea el nuevo objeto mensaje
-                            newMensaje.add(new lvMensajesItems(
-                                    newMensaje.size() + 1, // tempID
-                                    0,                     // idMensaje
-                                    representante.getId(), // idRepresentante
-                                    idDocente,             // idDocente
-                                    1,                     // via
-                                    3,                     // status 3 = pbar visible
-                                    fechaEnvio,
-                                    txtMensaje.getText().toString())
-                                    );
-
-                            SharedPreferences.Editor sEditor = sPrefs.edit();
-                            sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
-                            sEditor.putInt(PROPERTY_CURRENT_ID_DOC,idDocente);
-                            sEditor.apply();
-
-                            actualizarConversaciones();
-
-                            /*
-                            parametros.add(0, "tempId*" + params[0]);
-                            parametros.add(1, "via*" + params[1]);
-                            parametros.add(2, "idRepresentante*" + params[2]);
-                            parametros.add(3, "idDocente*" + params[3]);
-                            parametros.add(4, "texto*" + params[4]);
-                            parametros.add(5, "fechaHora*" + params[5]);
-                            parametros.add(6, "enviarMensaje");
-                            */
-
-                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("es","ES"));
-
-                            new AsyncEnviarMensaje().execute(
-                                    newMensaje.size(),
-                                    1,
-                                    representante.getId(),
-                                    idDocente,
-                                    txtMensaje.getText().toString(),
-                                    df.format(new Date(fechaEnvio))
-                            );
+                            newMensaje = gson.fromJson(sPrefs.getString(PROPERTY_CONVERSATIONS,""),type);
                         }
                         else
                         {
-                            ArrayList<lvMensajesItems> newMensaje = new ArrayList<>();
-
-                            long fechaEnvio = System.currentTimeMillis();
-
-                            // se crea el nuevo objeto mensaje
-                            newMensaje.add(new lvMensajesItems(
-                                    newMensaje.size() + 1, // tempID
-                                    0,                     // idMensaje
-                                    representante.getId(), // idRepresentante
-                                    idDocente,             // idDocente
-                                    1,                     // via
-                                    3,                     // status 3 = pbar visible
-                                    fechaEnvio,
-                                    txtMensaje.getText().toString())
-                            );
-
-                            gson = new Gson();
-                            SharedPreferences.Editor sEditor = sPrefs.edit();
-                            sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
-                            sEditor.apply();
-
-                            actualizarConversaciones();
-
-                            /*
-                            parametros.add(0, "tempId*" + params[0]);
-                            parametros.add(1, "via*" + params[1]);
-                            parametros.add(2, "idRepresentante*" + params[2]);
-                            parametros.add(3, "idDocente*" + params[3]);
-                            parametros.add(4, "texto*" + params[4]);
-                            parametros.add(5, "fechaHora*" + params[5]);
-                            parametros.add(6, "enviarMensaje");
-                            */
-
-                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("es","ES"));
-
-                            new AsyncEnviarMensaje().execute(
-                                    newMensaje.size(),
-                                    1,
-                                    representante.getId(),
-                                    idDocente,
-                                    txtMensaje.getText().toString(),
-                                    df.format(new Date(fechaEnvio))
-                            );
+                            newMensaje = new ArrayList<>();
                         }
-                    }
 
+                        long fechaEnvio = System.currentTimeMillis();
+
+                        // se crea el nuevo objeto mensaje
+                        newMensaje.add(new lvMensajesItems(
+                                newMensaje.size() + 1,              // tempID
+                                0,                                  // idMensaje
+                                1,                                  // via
+                                idDocente,                          // idDocente
+                                representante.getId(),              // idRepresentante
+                                3,                                  // status 3 = pbar visible
+                                fechaEnvio,                         // fechaEnvio
+                                txtMensaje.getText().toString())    // textoMensaje
+                        );
+
+                        SharedPreferences.Editor sEditor = sPrefs.edit();
+                        sEditor.putString(PROPERTY_CONVERSATIONS,gson.toJson(newMensaje));
+                        sEditor.putInt(PROPERTY_CURRENT_ID_DOC,idDocente);
+                        sEditor.apply();
+
+                        actualizarConversaciones();
+
+                        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("es","ES"));
+
+                        new AsyncEnviarMensaje().execute(
+                                newMensaje.size(),
+                                1,
+                                representante.getId(),
+                                idDocente,
+                                txtMensaje.getText().toString(),
+                                df.format(new Date(fechaEnvio))
+                        );
+                    }
                     txtMensaje.setText(null);
                 }
             }
@@ -576,7 +525,6 @@ public class Frm_Principal extends Activity {
                         if (spinnerItems.get(i).getIdDocente() == idDocente){
                             spinnerItems.get(i).setRegistrado(registrado);
                             spinnerAdapter.notifyDataSetChanged();
-                            break;
                         }
                     }
                 }
@@ -757,8 +705,6 @@ public class Frm_Principal extends Activity {
 
                 String result = jsonObj.get("Result").toString();
 
-                Log.d("EJVH Alumnos Response", response.toString());
-
                 switch (result) {
                     case "OK":
                         JSONArray array = jsonObj.getJSONArray("Alumnos");
@@ -868,9 +814,9 @@ public class Frm_Principal extends Activity {
         protected Integer doInBackground(Object... params) {
             publishProgress(0);
             ArrayList<Object>  parametros = new ArrayList<>(4);
-            parametros.add(0, "Id*" + params[0]);
-            parametros.add(1, "TipoCalendario*"+ params[1]);
-            parametros.add(2, "getCalendario");
+            parametros.add(0, "idRepresentante*" + params[0]);
+            parametros.add(1, "tipoCalendario*"+ params[1]);
+            parametros.add(2, "getCalendarioRepresentante");
 
             respuesta ws = new respuesta();
             response = ws.getData(parametros);
@@ -1003,15 +949,6 @@ public class Frm_Principal extends Activity {
 
                 switch (result) {
                     case "CONFIRMADO":
-                        /*
-                                Result = "CONFIRMADO",
-                                Via = via,
-                                IdDocente = idDocente,
-                                IdRepresentante = idRepresentante,
-                                IdMensaje = idMensaje,
-                                Estado = estado
-                        */
-
                         Log.d("EJVH CONFIRMACION", response.toString());
                         break;
                     default:

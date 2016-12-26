@@ -9,12 +9,11 @@
         android:layout_height="wrap_content"
         android:padding="2dp">
 
-        <ImageView
+        <de.hdodenhof.circleimageview.CircleImageView
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:id="@+id/imgPerfil"
             android:contentDescription="@string/app_name"
-            android:scaleType="centerInside"
             android:layout_alignParentStart="true"
             android:layout_alignParentLeft="true"
             android:layout_centerInParent="true"/>

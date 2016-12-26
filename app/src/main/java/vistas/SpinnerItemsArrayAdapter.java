@@ -8,11 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 import com.villasoftgps.ebndsrrep.R;
 import java.util.ArrayList;
 import java.util.Locale;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class SpinnerItemsArrayAdapter extends BaseAdapter {
 
@@ -48,7 +48,7 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.spinnerlayout,null);
         }
 
-        ImageView imgPerfil = (ImageView)convertView.findViewById(R.id.imgPerfil);
+        CircleImageView imgPerfil = (CircleImageView)convertView.findViewById(R.id.imgPerfil);
         TextView lblIdDocente = (TextView)convertView.findViewById(R.id.lblIdDocente);
         TextView lblIdAlumno = (TextView)convertView.findViewById(R.id.lblIdAlumno);
         TextView lblRegistrado = (TextView)convertView.findViewById(R.id.lblRegistrado);
@@ -56,7 +56,7 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
         TextView lblAlumno = (TextView)convertView.findViewById(R.id.lblAlumno);
 
         if (alumno.getImagen().equals("")){
-            imgPerfil.setImageResource(R.drawable.teacher_icon);
+            imgPerfil.setImageResource(R.drawable.profile_img);
         }else{
             byte[] decodedBytes = Base64.decode(alumno.getImagen(),0);
             imgPerfil.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
@@ -67,6 +67,7 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
         lblRegistrado.setText(String.format(new Locale("es","ES"),"%1$d",alumno.getRegistrado()));
         lblDocente.setText(alumno.getApellidosDoc() + ", " + alumno.getNombresDoc());
         lblAlumno.setText(alumno.getApellidosAl() + ", " + alumno.getNombresAl());
+
 
         if(alumno.getRegistrado() == 0){
             lblDocente.setTextColor(Color.parseColor("#8b0101"));

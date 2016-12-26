@@ -136,7 +136,7 @@ public class lvMensajesItemsArrayAdapter extends BaseAdapter {
             curFecha.setTime(new Date(mensaje.getFechaHora()));
             String curHeader = getHeader(curFecha);
 
-            SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss aaa",new Locale("es", "ES"));
+            SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss aaa",new Locale("es", "ES"));
 
             mensajeHolder.lblHeader.setText(curHeader);
             mensajeHolder.lblHeader.setVisibility(prevHeader.equals(curHeader) ? View.GONE : View.VISIBLE);

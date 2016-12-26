@@ -14,8 +14,8 @@
     <string name="lista_sin_eventos">Sin eventos para mostrar</string>
     <string name="escriba_su_mensaje">escriba su mensaje</string>
     <string name="docentes">Docentes</string>
-    <string name="representante">REPRESENTANTE</string>
-    <string name="docente">DOCENTE</string>
+    <string name="representante">REP</string>
+    <string name="docente">DOC</string>
     <string name="cargando_eventos_npor_favor_espere">Cargando Eventos\nPor favor espere...</string>
     <string name="m_dulo_representante">Módulo Representante</string>
     <string name="confirmarCerrarSesion">¿Está seguro que desea cerrar su sesión?</string>

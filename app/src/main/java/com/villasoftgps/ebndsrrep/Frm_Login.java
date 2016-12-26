@@ -366,8 +366,6 @@ public class Frm_Login extends Activity {
                     }
 
                     startActivity(i);
-                    //mensaje = getResources().getString(R.string.bienvenidoCliente) + "\n" + representante.getNombres() + " " + representante.getApellidos();
-                    //mostrarMensaje(true, false, 0, mensaje);
                 }
             });
 
