@@ -78,9 +78,14 @@ public class GCMIntentService extends IntentService
                         sPrefs = getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
                     }
 
+                    Log.d("EJVH result rep",result);
+
+
                     switch (result){
                         case "INCOMING":
                             JSONObject array = new JSONObject(jsonObj.get("Mensaje").toString());
+
+                            Log.d("EJVH result rep via",Integer.toString(array.getInt("Via")));
 
                             if (array.getInt("Via") == 0){ // se valida que sea un docente quien este enviando el msj
                                 // se convierte la fecha quitando caracteres no numericos
@@ -133,6 +138,8 @@ public class GCMIntentService extends IntentService
                             break;
 
                         case "UPDATE":
+                            Log.d("EJVH update rep via",jsonObj.get("Via").toString());
+
                             if (jsonObj.get("Via").toString().equals("1")){ // si el docente esta confirmando....
                                 if (!sPrefs.getString(PROPERTY_CONVERSATIONS,"").equals("")){
                                     Type type = new TypeToken<ArrayList<lvMensajesItems>>() {}.getType();
@@ -247,7 +254,7 @@ public class GCMIntentService extends IntentService
                 .setWhen(fecha)
                 .setDefaults(Notification.DEFAULT_LIGHTS)
                 .setDefaults(Notification.DEFAULT_SOUND)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.drawable.representante_icon));
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.drawable.parent_large));
 
         boolean isForeground = sPrefs.getBoolean(PROPERTY_IS_FOREGROUND,false);
         int currentTab = sPrefs.getInt(PROPERTY_CURRENT_TAB,0);
