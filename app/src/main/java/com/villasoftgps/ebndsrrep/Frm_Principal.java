@@ -34,11 +34,6 @@ import com.google.gson.reflect.TypeToken;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.ksoap2.SoapEnvelope;
-import org.ksoap2.serialization.PropertyInfo;
-import org.ksoap2.serialization.SoapObject;
-import org.ksoap2.serialization.SoapSerializationEnvelope;
-import org.ksoap2.transport.HttpTransportSE;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,6 +41,7 @@ import java.util.Date;
 import java.util.Locale;
 import clases.RegistrarGCM;
 import clases.Representante;
+import clases.Respuesta;
 import controles.AutoResizeTextView;
 import vistas.CustomProgress;
 import vistas.LogoutDialog;
@@ -558,7 +554,7 @@ public class Frm_Principal extends Activity {
             parametros.add(1, "origen*" + params[1]);
             parametros.add(2, "eliminarGcmRep");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             Object response = ws.getData(parametros);
 
             try {
@@ -621,7 +617,7 @@ public class Frm_Principal extends Activity {
             parametros.add(5, "fechaHora*" + params[5]);
             parametros.add(6, "enviarMensaje");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             response = ws.getData(parametros);
 
             try
@@ -697,7 +693,7 @@ public class Frm_Principal extends Activity {
             parametros.add(0, "idRepresentante*" + params[0]);
             parametros.add(1, "getAlumnosDocentes");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             response = ws.getData(parametros);
 
             try
@@ -819,7 +815,7 @@ public class Frm_Principal extends Activity {
             parametros.add(1, "tipoCalendario*"+ params[1]);
             parametros.add(2, "getCalendarioRepresentante");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             response = ws.getData(parametros);
 
             try {
@@ -940,7 +936,7 @@ public class Frm_Principal extends Activity {
             parametros.add(1, "estado*" + params[1]);
             parametros.add(2, "confirmarMensaje");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             Object response = ws.getData(parametros);
 
             try
@@ -961,43 +957,6 @@ public class Frm_Principal extends Activity {
             }
 
             return null;
-        }
-    }
-
-    private static class respuesta {
-        Object getData(ArrayList<Object> parametros){
-            Object data;
-            String namespace = "http://schooltool.org/";
-            String direccion = "http://154.42.65.212:9600/schooltool.asmx";
-            String metodo = parametros.get(parametros.size() - 1).toString();
-            String soapAction = namespace + metodo;
-
-            SoapObject request = new SoapObject(namespace, metodo);
-            String property[];
-            PropertyInfo pi;
-
-            for (int i = 0; i < parametros.size() - 1; i++){
-                property = parametros.get(i).toString().split("\\*");
-                pi = new PropertyInfo();
-                pi.setName(property[0]);
-                pi.setValue(property[1]);
-                pi.setType(property[1].getClass());
-                request.addProperty(pi);
-            }
-
-            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-            envelope.dotNet = true;
-            envelope.setOutputSoapObject(request);
-            HttpTransportSE httpTransport = new HttpTransportSE(direccion);
-
-            try {
-                httpTransport.call(soapAction, envelope);
-                data = envelope.getResponse();
-            } catch (Exception exception) {
-                data = exception.toString();
-            }
-
-            return data;
         }
     }
 

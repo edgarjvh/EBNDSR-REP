@@ -19,13 +19,9 @@ import android.widget.EditText;
 import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.ksoap2.SoapEnvelope;
-import org.ksoap2.serialization.PropertyInfo;
-import org.ksoap2.serialization.SoapObject;
-import org.ksoap2.serialization.SoapSerializationEnvelope;
-import org.ksoap2.transport.HttpTransportSE;
 import java.util.ArrayList;
 import clases.Representante;
+import clases.Respuesta;
 import controles.AutoResizeTextView;
 import vistas.CustomProgress;
 
@@ -93,7 +89,7 @@ public class Frm_Login extends Activity {
             parametros.add(1, "Clave*"+ params[1]);
             parametros.add(2, "loginRepresentante");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             response = ws.getData(parametros);
 
             try {
@@ -183,51 +179,6 @@ public class Frm_Login extends Activity {
         @Override
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
-        }
-    }
-
-    private static class respuesta {
-        Object getData(ArrayList<Object> parametros){
-            Object data;
-            String namespace = "http://schooltool.org/";
-            String direccion = "http://154.42.65.212:9600/schooltool.asmx";
-            String metodo = parametros.get(parametros.size() - 1).toString();
-            String soapAction = namespace + metodo;
-
-            SoapObject request = new SoapObject(namespace, metodo);
-
-            if (parametros.size() > 0){
-                String property[];
-                PropertyInfo pi;
-
-                property = parametros.get(0).toString().split("\\*");
-                pi = new PropertyInfo();
-                pi.setName(property[0]);
-                pi.setValue(property[1]);
-                pi.setType(Integer.class);
-                request.addProperty(pi);
-
-                property = parametros.get(1).toString().split("\\*");
-                pi = new PropertyInfo();
-                pi.setName(property[0]);
-                pi.setValue(property[1]);
-                pi.setType(String.class);
-                request.addProperty(pi);
-            }
-
-            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-            envelope.dotNet = true;
-            envelope.setOutputSoapObject(request);
-            HttpTransportSE httpTransport = new HttpTransportSE(direccion);
-
-            try {
-                httpTransport.call(soapAction, envelope);
-                data = envelope.getResponse();
-            } catch (Exception exception) {
-                data = exception.toString();
-            }
-
-            return data;
         }
     }
 
@@ -386,7 +337,7 @@ public class Frm_Login extends Activity {
             parametros.add(1, "origen*" + params[1]);
             parametros.add(2, "eliminarGcmRep");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             Object response = ws.getData(parametros);
 
             try {

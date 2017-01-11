@@ -7,16 +7,12 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
+import org.json.JSONException;
 import org.json.JSONObject;
-import org.ksoap2.SoapEnvelope;
-import org.ksoap2.serialization.SoapObject;
-import org.ksoap2.serialization.SoapPrimitive;
-import org.ksoap2.serialization.SoapSerializationEnvelope;
-import org.ksoap2.transport.HttpTransportSE;
 import java.io.IOException;
+import java.util.ArrayList;
 
 @SuppressWarnings("ALL")
 public class RegistrarGCM {
@@ -87,13 +83,33 @@ public class RegistrarGCM {
 
                 String regID = GCM.register(SENDER_ID);
 
-                Log.d("EJVH REG ID", regID);
-                Boolean registrado = registroServidor(regID);
+                ArrayList<Object> parametros = new ArrayList<>(8);
+                parametros.add(0, "tipo*" + 1);
+                parametros.add(1, "id*" + representante.getId());
+                parametros.add(2, "regID*" + regID);
+                parametros.add(3, "apiServidor*"+ SERVER_API);
+                parametros.add(4, "dispositivo*" + getDeviceName());
+                parametros.add(5, "versionAndroid*"+ Build.VERSION.RELEASE);
+                parametros.add(6, "versionApp*"+ getAppVersion(context));
+                parametros.add(7, "SaveGcmId");
 
-                //Guardamos los datos del registro
-                if(registrado)
-                {
-                    setRegistrationId(context, regID);
+                Respuesta ws = new Respuesta();
+                Object response = ws.getData(parametros);
+
+                JSONObject json = null;
+
+                try {
+                    json = new JSONObject(response.toString());
+                    String result = json.get("Result").toString();
+
+                    //Guardamos los datos del registro
+                    if(result.equals("OK"))
+                    {
+                        setRegistrationId(context, regID);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
             catch (IOException ex){
@@ -101,45 +117,6 @@ public class RegistrarGCM {
             }
             return null;
         }
-    }
-
-    private boolean registroServidor(String regId){
-        boolean reg = false;
-
-        final String NAMESPACE = "http://schooltool.org/";
-        final String URL= "http://154.42.65.212:9600/schooltool.asmx";
-        final String METHOD_NAME = "SaveGcmId";
-        final String SOAP_ACTION = NAMESPACE + METHOD_NAME;
-
-        SoapObject request = new SoapObject(NAMESPACE, METHOD_NAME);
-        request.addProperty("tipo", 1); // 0 = registro de docente; 1 = registro de representante
-        request.addProperty("id", representante.getId());
-        request.addProperty("regID", regId);
-        request.addProperty("apiServidor", SERVER_API);
-        request.addProperty("dispositivo", getDeviceName());
-        request.addProperty("versionAndroid", Build.VERSION.RELEASE);
-        request.addProperty("versionApp", getAppVersion(context));
-
-        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-        envelope.dotNet = true;
-        envelope.setOutputSoapObject(request);
-        HttpTransportSE transporte = new HttpTransportSE(URL);
-
-        try
-        {
-            transporte.call(SOAP_ACTION, envelope);
-            SoapPrimitive response =(SoapPrimitive)envelope.getResponse();
-            JSONObject jsonObj = new JSONObject(response.toString());
-            String result = jsonObj.get("Result").toString();
-
-            reg = result.equals("OK");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        return reg;
     }
 
     private int getAppVersion(Context context){

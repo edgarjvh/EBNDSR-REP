@@ -16,13 +16,9 @@ import android.widget.EditText;
 import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.ksoap2.SoapEnvelope;
-import org.ksoap2.serialization.PropertyInfo;
-import org.ksoap2.serialization.SoapObject;
-import org.ksoap2.serialization.SoapSerializationEnvelope;
-import org.ksoap2.transport.HttpTransportSE;
 import java.util.ArrayList;
 import clases.Representante;
+import clases.Respuesta;
 import vistas.CustomProgress;
 
 public class Frm_CambiarClave extends Activity {
@@ -107,7 +103,7 @@ public class Frm_CambiarClave extends Activity {
             parametros.add(3, "claveNueva*" + params[3]);
             parametros.add(4, "cambiarClave");
 
-            respuesta ws = new respuesta();
+            Respuesta ws = new Respuesta();
             Object response = ws.getData(parametros);
 
             try {
@@ -166,43 +162,6 @@ public class Frm_CambiarClave extends Activity {
                     mostrarMensaje(false,false,2,mensaje);
                     break;
             }
-        }
-    }
-
-    private static class respuesta {
-        Object getData(ArrayList<Object> parametros){
-            Object data;
-            String namespace = "http://schooltool.org/";
-            String direccion = "http://154.42.65.212:9600/schooltool.asmx";
-            String metodo = parametros.get(parametros.size() - 1).toString();
-            String soapAction = namespace + metodo;
-
-            SoapObject request = new SoapObject(namespace, metodo);
-            String property[];
-            PropertyInfo pi;
-
-            for (int i = 0; i < parametros.size() - 1; i++){
-                property = parametros.get(i).toString().split("\\*");
-                pi = new PropertyInfo();
-                pi.setName(property[0]);
-                pi.setValue(property[1]);
-                pi.setType(property[1].getClass());
-                request.addProperty(pi);
-            }
-
-            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-            envelope.dotNet = true;
-            envelope.setOutputSoapObject(request);
-            HttpTransportSE httpTransport = new HttpTransportSE(direccion);
-
-            try {
-                httpTransport.call(soapAction, envelope);
-                data = envelope.getResponse();
-            } catch (Exception exception) {
-                data = exception.toString();
-            }
-
-            return data;
         }
     }
 
