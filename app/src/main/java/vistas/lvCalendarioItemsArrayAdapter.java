@@ -57,6 +57,7 @@ public class lvCalendarioItemsArrayAdapter extends ArrayAdapter<lvCalendarioItem
         holder.fechaItem.setText(weather.fecha);
         holder.descripcion.setText(weather.descripcion);
         holder.iconoItem.setImageResource(weather.icono == 1 ? R.drawable.bulb_on : R.drawable.bulb_off);
+        holder.iconoItem.setVisibility(View.GONE);
 
         if (!weather.header.equals("")){
             holder.header.setText(weather.header);

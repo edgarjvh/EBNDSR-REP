@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 import com.villasoftgps.ebndsrrep.R;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -56,10 +58,18 @@ public class SpinnerItemsArrayAdapter extends BaseAdapter {
         TextView lblAlumno = (TextView)convertView.findViewById(R.id.lblAlumno);
 
         if (alumno.getImagen().equals("")){
-            imgPerfil.setImageResource(R.drawable.profile_img);
+            Glide.with(c)
+                    .load(R.drawable.profile_img)
+                    .centerCrop()
+                    .crossFade()
+                    .into(imgPerfil);
         }else{
             byte[] decodedBytes = Base64.decode(alumno.getImagen(),0);
-            imgPerfil.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+            Glide.with(c)
+                    .load(decodedBytes)
+                    .centerCrop()
+                    .crossFade()
+                    .into(imgPerfil);
         }
 
         lblIdDocente.setText(String.format(new Locale("es","ES"),"%1$d",alumno.getIdDocente()));

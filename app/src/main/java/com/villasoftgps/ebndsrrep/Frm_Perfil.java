@@ -1,5 +1,6 @@
 package com.villasoftgps.ebndsrrep;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -9,10 +10,13 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -20,6 +24,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,6 +36,7 @@ import java.util.ArrayList;
 import clases.Representante;
 import clases.Respuesta;
 import de.hdodenhof.circleimageview.CircleImageView;
+import vistas.CustomProgress;
 import vistas.lvPerfilArrayAdapter;
 import vistas.lvPerfilItems;
 
@@ -50,6 +57,7 @@ public class Frm_Perfil extends Activity {
     private Uri uri;
     private File file;
     String imageString;
+    CustomProgress dialogMessage = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +100,7 @@ public class Frm_Perfil extends Activity {
                                     }
                                     break;
                                 case 2:
-                                    profile_image.setImageResource(R.drawable.profile_img);
-                                    new AsyncSendImage().execute(representante.getId(), 0, "");
+                                    quitarImagenPerfil();
                                     break;
                                 default:
                                     dialog.dismiss();
@@ -113,11 +120,24 @@ public class Frm_Perfil extends Activity {
             sPrefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         }
 
+        mostrarMensaje(false,true,0,"Cargando perfil. Por favor espere...");
         Gson gson = new Gson();
         representante = gson.fromJson(sPrefs.getString(PROPERTY_USER, ""), Representante.class);
 
-        byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);
-        profile_image.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+        if (representante.getImagen().equals("")){
+            Glide.with(Frm_Perfil.this)
+                    .load(R.drawable.profile_img)
+                    .centerCrop()
+                    .crossFade()
+                    .into(profile_image);
+        }else{
+            byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);
+            Glide.with(Frm_Perfil.this)
+                    .load(decodedBytes)
+                    .centerCrop()
+                    .crossFade()
+                    .into(profile_image);
+        }
 
         lvPerfil.addHeaderView(header);
         data = new ArrayList<>();
@@ -153,6 +173,27 @@ public class Frm_Perfil extends Activity {
         ));
 
         new AsyncRepresentados().execute(representante.getId());
+    }
+
+    private void quitarImagenPerfil(){
+        Glide.with(Frm_Perfil.this)
+                .load(R.drawable.profile_img)
+                .centerCrop()
+                .crossFade()
+                .into(profile_image);
+
+        representante.setImagen("");
+
+        if (sPrefs == null){
+            sPrefs = getSharedPreferences(PREF_NAME,MODE_PRIVATE);
+        }
+
+        SharedPreferences.Editor sEditor = sPrefs.edit();
+        Gson gson = new Gson();
+        sEditor.putString(PROPERTY_USER,gson.toJson(representante));
+        sEditor.apply();
+
+        new AsyncSendImage().execute(0, representante.getId(), "0");
     }
 
     private class AsyncRepresentados extends AsyncTask<Object, Integer, Integer> {
@@ -300,6 +341,11 @@ public class Frm_Perfil extends Activity {
 
             lvPerfilArrayAdapter adapter = new lvPerfilArrayAdapter(Frm_Perfil.this, data);
             lvPerfil.setAdapter(adapter);
+
+            if (dialogMessage != null){
+                dialogMessage.dismiss();
+                dialogMessage = null;
+            }
         }
     }
 
@@ -350,6 +396,7 @@ public class Frm_Perfil extends Activity {
         representante.setImagen(imageString);
 
         new AsyncSendImage().execute(representante.getId(), 0, imageString);
+        Toast.makeText(Frm_Perfil.this, "Aplicando imagen de perfil...", Toast.LENGTH_LONG).show();
     }
 
     private class AsyncSendImage extends AsyncTask<Object, Integer, Integer> {
@@ -390,7 +437,12 @@ public class Frm_Perfil extends Activity {
 
             if (value == 1){
                 byte[] decodedBytes = Base64.decode(representante.getImagen(), 0);
-                profile_image.setImageBitmap(BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length));
+
+                Glide.with(Frm_Perfil.this)
+                        .load(decodedBytes)
+                        .centerCrop()
+                        .crossFade()
+                        .into(profile_image);
 
                 if (sPrefs == null){
                     sPrefs = getSharedPreferences(PREF_NAME,MODE_PRIVATE);
@@ -410,6 +462,87 @@ public class Frm_Perfil extends Activity {
             }
 
             Toast.makeText(Frm_Perfil.this, texto, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void mostrarMensaje(Boolean esBienvenida, Boolean enProgreso, int icono, String msj){
+        try{
+            if(esBienvenida){
+                if(dialogMessage != null) {
+                    dialogMessage.dismiss();
+                    dialogMessage = null;
+                }
+
+                dialogMessage = new CustomProgress(Frm_Perfil.this,enProgreso,icono,msj);
+                dialogMessage.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                dialogMessage.setCanceledOnTouchOutside(false);
+                dialogMessage.show();
+
+                CountDownTimer timer = new CountDownTimer(3000,1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                    }
+
+                    @SuppressLint("CommitPrefEdits")
+                    @Override
+                    public void onFinish() {
+                        /*Intent i = new Intent(Frm_Perfil.this, Frm_Principal.class);
+
+                        sEditor = sPrefs.edit();
+                        Gson gson = new Gson();
+                        String user = gson.toJson(docente);
+                        sEditor.putString(PROPERTY_USER,user);
+                        sEditor.apply();
+
+                        startActivity(i);*/
+
+                        if (dialogMessage != null){
+                            dialogMessage.dismiss();
+                            dialogMessage = null;
+                        }
+                    }
+                };
+                timer.start();
+            }else{
+                if(enProgreso){
+                    if(dialogMessage != null){
+                        dialogMessage.dismiss();
+                        dialogMessage = null;
+                    }
+
+                    dialogMessage = new CustomProgress(Frm_Perfil.this,enProgreso,icono, msj);
+                    dialogMessage.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    dialogMessage.setCanceledOnTouchOutside(true);
+                    dialogMessage.show();
+                }else{
+                    if(dialogMessage != null) {
+                        dialogMessage.dismiss();
+                        dialogMessage = null;
+                    }
+
+                    dialogMessage = new CustomProgress(Frm_Perfil.this,enProgreso,icono,msj);
+                    dialogMessage.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    dialogMessage.setCanceledOnTouchOutside(true);
+                    dialogMessage.show();
+
+                    CountDownTimer timer = new CountDownTimer(3000,1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            if(dialogMessage != null){
+                                dialogMessage.dismiss();
+                                dialogMessage = null;
+                            }
+                        }
+                    };
+                    timer.start();
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 }
